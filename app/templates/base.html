@@ -1,11 +1,23 @@
 {% from "_macros.html" import avatar %}
 <!doctype html>
-<html lang="es">
+<html lang="es" data-theme="dark">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="csrf-token" content="{{ csrf_token() }}">
-  <meta name="theme-color" content="#0a0b1e">
+  <meta name="theme-color" content="#22251f">
+  <script>
+    try {
+      const savedTheme = window.localStorage.getItem("mypixel-theme");
+      if (savedTheme === "light" || savedTheme === "dark") {
+        document.documentElement.dataset.theme = savedTheme;
+        document.querySelector('meta[name="theme-color"]').content =
+          savedTheme === "light" ? "#e7e4d8" : "#22251f";
+      }
+    } catch (error) {
+      console.warn("No se pudo cargar la preferencia de tema.", error);
+    }
+  </script>
   <title>{% block title %}Inicio{% endblock %} · MyPixel</title>
 
   <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='img/favicon.svg', v=ASSET_VERSION) }}">
@@ -32,6 +44,9 @@
       </form>
 
       <div class="nav-actions">
+        <button class="nav-link theme-toggle" type="button" data-theme-toggle aria-label="Cambiar a modo claro" title="Cambiar a modo claro">
+          Modo claro
+        </button>
         {% if current_user.is_authenticated %}
           <a class="btn btn--sm" href="{{ url_for('posts.create') }}">+ Post</a>
           {% if current_user.is_admin %}<a class="nav-link nav-link--admin" href="{{ url_for('admin.dashboard') }}">Admin</a>{% endif %}
@@ -68,7 +83,7 @@
     {% block content %}{% endblock %}
   </main>
 
-  <footer class="site-footer">MYPIXEL &copy; 2026 &middot; <span class="blink">INSERT COIN</span></footer>
+  <footer class="site-footer">MYPIXEL &copy; 2026 &middot; HECHO CON PIXELES</footer>
 
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
   <script defer src="{{ url_for('static', filename='js/main.js', v=ASSET_VERSION) }}"></script>

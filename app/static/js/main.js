@@ -3,6 +3,34 @@
 (function () {
   "use strict";
 
+  const themeToggle = document.querySelector("[data-theme-toggle]");
+  if (themeToggle) {
+    const updateThemeButton = (theme) => {
+      const nextTheme = theme === "dark" ? "light" : "dark";
+      const label = nextTheme === "light" ? "modo claro" : "modo oscuro";
+      themeToggle.textContent = `Modo ${nextTheme === "light" ? "claro" : "oscuro"}`;
+      themeToggle.setAttribute("aria-label", `Cambiar a ${label}`);
+      themeToggle.title = `Cambiar a ${label}`;
+    };
+
+    const initialTheme = document.documentElement.dataset.theme === "light" ? "light" : "dark";
+    updateThemeButton(initialTheme);
+    themeToggle.addEventListener("click", () => {
+      const nextTheme = document.documentElement.dataset.theme === "light" ? "dark" : "light";
+      document.documentElement.dataset.theme = nextTheme;
+      document.querySelector('meta[name="theme-color"]')?.setAttribute(
+        "content",
+        nextTheme === "light" ? "#e7e4d8" : "#22251f",
+      );
+      updateThemeButton(nextTheme);
+      try {
+        window.localStorage.setItem("mypixel-theme", nextTheme);
+      } catch (error) {
+        console.warn("No se pudo guardar la preferencia de tema.", error);
+      }
+    });
+  }
+
   const csrfToken = () => document.querySelector('meta[name="csrf-token"]')?.content || "";
 
   // ---- 1. Resaltado de sintaxis (highlight.js) --------------------------------

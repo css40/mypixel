@@ -1,0 +1,51 @@
+{% extends "chat/_layout.html" %}
+{% from "_macros.html" import avatar, code_block %}
+{% block title %}{{ title }}{% endblock %}
+{% block chat_content %}
+<div class="chat-room panel panel--green">
+  <header class="chat-head">
+    {% if kind == 'dm' %}
+      {{ avatar(other, 32) }}
+      <h1><a href="{{ url_for('profile.view', username=other.username) }}">{{ title }}</a></h1>
+    {% else %}
+      <div class="grow" style="max-width:60%">
+        <h1 class="truncate"># {{ group.name }}</h1>
+        <p class="truncate muted small">{{ group.description or 'Sin descripción' }} · {{ group.member_count }} miembros</p>
+      </div>
+      {% if group.owner_id == current_user.id %}
+        <form method="post" action="{{ url_for('chat.delete_group', group_id=group.id) }}" data-confirm="¿Eliminar el grupo y todos sus mensajes?" class="inline">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button class="btn btn--sm btn--red">Borrar</button>
+        </form>
+      {% else %}
+        <form method="post" action="{{ url_for('chat.leave_group', group_id=group.id) }}" data-confirm="¿Salir del grupo?" class="inline">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button class="btn btn--sm btn--ghost">Salir</button>
+        </form>
+      {% endif %}
+    {% endif %}
+    <span id="conn-status" role="status" title="Pulsa para reconectar">Conectando…</span>
+  </header>
+
+  <ol id="messages" class="msgs" aria-live="polite">
+    {% for m in messages %}
+      <li class="msg {{ 'msg--mine' if m.sender_id == current_user.id }}" data-id="{{ m.id }}">
+        {{ avatar(m.sender, 32) }}
+        <div class="msg__body">
+          <div class="msg__meta">{{ m.sender.username }} · <time data-ts="{{ m.created_at.isoformat() }}Z"></time></div>
+          {% if m.is_code %}{{ code_block(m.body, m.code_language or 'plaintext') }}
+          {% else %}<p class="bubble">{{ m.body }}</p>{% endif %}
+        </div>
+      </li>
+    {% endfor %}
+  </ol>
+  <p id="typing-indicator" class="typing" aria-live="polite"></p>
+
+  <form id="chat-form" class="chat-form">
+    <label class="sr-only" for="chat-input">Mensaje</label>
+    <textarea id="chat-input" class="textarea" rows="1" maxlength="2000"
+              placeholder="Escribe un mensaje... Usa ``` para enviar código resaltado"></textarea>
+    <button id="chat-send" class="btn">Enviar</button>
+  </form>
+</div>
+{% endblock %}

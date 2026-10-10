@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="grid-admin">
+  <nav class="admin-nav" aria-label="Administración">
+    <a class="tab {{ 'is-active' if request.endpoint == 'admin.dashboard' }}" href="{{ url_for('admin.dashboard') }}">Resumen</a>
+    <a class="tab {{ 'is-active' if request.endpoint == 'admin.users' }}" href="{{ url_for('admin.users') }}">Usuarios</a>
+    <a class="tab {{ 'is-active' if request.endpoint == 'admin.posts' }}" href="{{ url_for('admin.posts') }}">Posts</a>
+  </nav>
+  <section>{% block admin_content %}{% endblock %}</section>
+</div>
+{% endblock %}

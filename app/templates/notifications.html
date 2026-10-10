@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% from "_macros.html" import avatar %}
+{% block title %}Notificaciones{% endblock %}
+{% block content %}
+<div class="medium">
+  <h1>Alertas</h1>
+  <ul class="stack mt-2" style="list-style:none;padding:0;--gap:.8rem">
+    {% for n in notifications %}
+      <li class="panel row row--nowrap {{ 'panel--cyan' if not n.read_at }}" style="align-items:flex-start">
+        <a href="{{ url_for('profile.view', username=n.actor.username) }}">{{ avatar(n.actor, 36) }}</a>
+        <div class="grow">
+          <p>
+            <a href="{{ url_for('profile.view', username=n.actor.username) }}">{{ n.actor.username }}</a>
+            {% if n.kind == 'comment' %}comentó en tu publicación
+            {% elif n.kind == 'like' %}le dio me gusta a tu publicación
+            {% elif n.kind == 'rating' %}valoró tu publicación
+            {% elif n.kind == 'follow' %}empezó a seguirte{% endif %}
+            {% if n.post %}<a href="{{ url_for('posts.detail', post_id=n.post.id) }}">{{ n.post.title }}</a>{% endif %}
+          </p>
+          <p class="muted small">{{ n.created_at|timeago }}</p>
+        </div>
+      </li>
+    {% else %}
+      <li class="panel panel--dashed">Todavía no tienes alertas. Cuando alguien comente, valore o te siga, aparecerá aquí.</li>
+    {% endfor %}
+  </ul>
+  {% set endpoint = 'main.notifications' %}{% set kwargs = {} %}
+  {% include "posts/_pagination.html" %}
+</div>
+{% endblock %}

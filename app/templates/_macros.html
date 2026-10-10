@@ -1,0 +1,94 @@
+{# Avatar: imagen si existe, si no la inicial del usuario (cuadrado, estilo pixel) #}
+{% macro avatar(user, size=40) %}
+  {% if user.avatar_url %}
+    <img class="avatar" src="{{ user.avatar_url }}" alt="" width="{{ size }}" height="{{ size }}" loading="lazy" style="--s:{{ size }}px">
+  {% else %}
+    <span class="avatar" style="--s:{{ size }}px" aria-hidden="true">{{ user.initial }}</span>
+  {% endif %}
+{% endmacro %}
+
+{# Bloque de código con resaltado y botón "Copiar" #}
+{% macro code_block(code, hljs_lang, label='') %}
+  <figure class="code-block">
+    <figcaption class="code-block__bar">
+      <span>{{ label or hljs_lang }}</span>
+      <button type="button" class="btn btn--sm btn--ghost copy-btn" aria-label="Copiar código al portapapeles">Copiar</button>
+    </figcaption>
+    <pre><code class="language-{{ hljs_lang }}">{{ code }}</code></pre>
+  </figure>
+{% endmacro %}
+
+{# Campo de formulario WTForms con etiqueta y errores #}
+{% macro field(f, rows=None, help=None) %}
+  {% set kind = 'textarea' if rows else ('select' if f.type == 'SelectField' else 'input') %}
+  <div class="field">
+    <label for="{{ f.id }}">{{ f.label.text }}</label>
+    {% set cls = kind ~ (' is-invalid' if f.errors else '') %}
+    {% if rows %}{{ f(rows=rows, class=cls) }}{% else %}{{ f(class=cls) }}{% endif %}
+    {% if help %}<p class="help">{{ help }}</p>{% endif %}
+    {% for e in f.errors %}<p class="error">{{ e }}</p>{% endfor %}
+  </div>
+{% endmacro %}
+
+{# Etiqueta de lenguaje #}
+{% macro lang_tag(name) %}
+  <a class="tag tag--green" href="{{ url_for('posts.feed', lang=name) }}">{{ name }}</a>
+{% endmacro %}
+
+{# Estrellas de solo lectura (media 0-5) #}
+{% macro stars_static(avg, size=16) %}
+  <span class="stars" role="img" aria-label="{{ avg }} de 5 estrellas">
+    {% for i in range(1, 6) %}
+      <svg class="star {{ 'is-on' if i <= (avg + 0.25)|round(0, 'floor') }}" width="{{ size }}" height="{{ size }}" viewBox="0 0 7 7" aria-hidden="true"><use href="#px-star"/></svg>
+    {% endfor %}
+  </span>
+{% endmacro %}
+
+{# Resumen de valoración para tarjetas. `stats` viene de post.stats (services/post_service.py) #}
+{% macro rating_summary(stats) %}
+  <span class="rating-summary">
+    {{ stars_static(stats.rating_avg) }}
+    {% if stats.rating_count %}<span>{{ stats.rating_avg }}</span><span class="muted">({{ stats.rating_count }})</span>
+    {% else %}<span class="muted">Sin votos</span>{% endif %}
+  </span>
+  {% if stats.featured %}<span class="tag tag--yellow">Recomendado</span>{% endif %}
+{% endmacro %}
+
+{# Botón de me gusta (tarjeta y detalle) #}
+{% macro like_button(post, login_url, label='') %}
+  <button type="button" class="like-btn {{ 'is-liked' if post.stats.liked }}"
+          data-url="{{ url_for('posts.toggle_like', post_id=post.id) }}"
+          aria-pressed="{{ 'true' if post.stats.liked else 'false' }}"
+          {% if login_url %}data-login="{{ login_url }}"{% endif %}>
+    <svg class="like-icon" viewBox="0 0 8 7" aria-hidden="true"><use href="#px-heart"/></svg>
+    <span class="like-count">{{ post.stats.likes }}</span>{% if label %} {{ label }}{% endif %}
+  </button>
+{% endmacro %}
+
+{# Selector interactivo de estrellas (detalle del post) #}
+{% macro rating_widget(post, my_rating, login_url, is_own) %}
+  {% set st = post.stats %}
+  <div class="rating-widget" data-url="{{ url_for('posts.rate', post_id=post.id) }}"
+       {% if login_url %}data-login="{{ login_url }}"{% endif %} {% if is_own %}data-own="1"{% endif %}>
+    <div class="row">
+      <div class="rate-stars" role="group" aria-label="Valorar este código de 1 a 5 estrellas">
+        {% for i in [5, 4, 3, 2, 1] %}
+          <button type="button" class="rate-btn {{ 'is-on' if my_rating and i <= my_rating }}" data-score="{{ i }}"
+                  aria-label="{{ i }} {{ 'estrella' if i == 1 else 'estrellas' }}" aria-pressed="{{ 'true' if my_rating == i else 'false' }}">
+            <svg viewBox="0 0 7 7" aria-hidden="true"><use href="#px-star"/></svg>
+          </button>
+        {% endfor %}
+      </div>
+      <span class="rating-text">
+        {% if st.rating_count %}<strong>{{ st.rating_avg }}</strong> · {{ st.rating_count }} valoración{{ 'es' if st.rating_count != 1 }}{% else %}Sin valoraciones todavía{% endif %}
+      </span>
+      <span class="featured-badge tag tag--yellow {{ '' if st.featured else 'hidden' }}">Recomendado</span>
+    </div>
+    <p class="rating-hint help">
+      {% if login_url %}Inicia sesión para valorar.
+      {% elif is_own %}No puedes valorar tu propio código.
+      {% elif my_rating %}Tu valoración: {{ my_rating }}/5 (pulsa la misma estrella para quitarla).
+      {% else %}¿Te sirvió? Valóralo: los mejores códigos suben en “Mejor valorados”.{% endif %}
+    </p>
+  </div>
+{% endmacro %}

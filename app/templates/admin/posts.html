@@ -1,0 +1,28 @@
+{% extends "admin/_layout.html" %}
+{% block title %}Publicaciones · Admin{% endblock %}
+{% block admin_content %}
+<h1>Publicaciones</h1>
+<div class="table-wrap mt-2">
+  <table class="table">
+    <thead><tr><th>Título</th><th>Autor</th><th>Lenguaje</th><th>Valoración</th><th></th></tr></thead>
+    <tbody>
+      {% for p in posts %}
+        <tr>
+          <td style="max-width:18rem" class="truncate"><a href="{{ url_for('posts.detail', post_id=p.id) }}">{{ p.title }}</a></td>
+          <td class="muted">{{ p.author.username }}</td>
+          <td class="muted">{{ p.language }}</td>
+          <td class="muted">{{ p.stats.rating_avg }} ({{ p.stats.rating_count }})</td>
+          <td class="right">
+            <form method="post" action="{{ url_for('admin.delete_post', post_id=p.id) }}" data-confirm="¿Eliminar «{{ p.title }}» por moderación?" class="inline">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button class="link-btn link-btn--danger">Eliminar</button>
+            </form>
+          </td>
+        </tr>
+      {% else %}<tr><td colspan="5" class="center muted">No hay publicaciones.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</div>
+{% set endpoint = 'admin.posts' %}{% set kwargs = {} %}
+{% include "posts/_pagination.html" %}
+{% endblock %}

@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% from "_macros.html" import avatar %}
+{% block content %}
+<div class="chat-layout">
+  <aside class="chat-sidebar panel" aria-label="Conversaciones">
+    <a class="btn btn--sm btn--cyan btn--block" href="{{ url_for('chat.index') }}">Buscar</a>
+
+    <div class="row between mt-2">
+      <h3 class="side-title" style="margin:0">Grupos</h3>
+      <a class="small" href="{{ url_for('chat.new_group') }}">+ Crear</a>
+    </div>
+    <ul class="menu mt-1" id="sidebar-groups">
+      {% for g in my_groups %}
+        <li><a class="conv-link {{ 'is-active' if active_key == 'group_' ~ g.id }} {{ 'has-unread' if g.has_unread }}" href="{{ url_for('chat.group', group_id=g.id) }}" data-conv="group_{{ g.id }}">
+          <span class="conv-link__name"># {{ g.name }}</span><span class="dot"></span></a></li>
+      {% else %}<li class="muted small">Aún no estás en ningún grupo.</li>{% endfor %}
+    </ul>
+
+    <h3 class="side-title mt-3">Directos</h3>
+    <ul class="menu" id="sidebar-dms">
+      {% for u in partners %}
+        <li><a class="conv-link {{ 'is-active' if active_key == 'dm_' ~ u.id }} {{ 'has-unread' if u.has_unread }}" href="{{ url_for('chat.direct', username=u.username) }}" data-conv="dm_{{ u.id }}">
+          <span class="conv-link__name">{{ avatar(u, 22) }}{{ u.username }}</span><span class="dot"></span></a></li>
+      {% else %}<li class="muted small">Sin conversaciones todavía.</li>{% endfor %}
+    </ul>
+  </aside>
+
+  <section>{% block chat_content %}{% endblock %}</section>
+</div>
+{% endblock %}
+
+{% block scripts %}
+  <script>window.CHAT = {
+    activeKey: {{ (active_key or '')|tojson }}, kind: {{ (kind or '')|tojson }},
+    targetId: {{ (target_id or 0)|tojson }}, room: {{ (room or '')|tojson }},
+    me: {{ current_user.id|tojson }}, loginUrl: {{ url_for('auth.login')|tojson }}
+  };</script>
+  <script defer src="https://cdn.socket.io/4.7.5/socket.io.min.js" crossorigin="anonymous"></script>
+  <script defer src="{{ url_for('static', filename='js/chat.js', v=ASSET_VERSION) }}"></script>
+{% endblock %}

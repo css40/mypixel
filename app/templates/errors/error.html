@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Error {{ code }}{% endblock %}
+{% block content %}
+<div class="narrow center" style="padding-block:3rem">
+  <p class="error-code">{{ code }}</p>
+  <p class="mt-2">{{ message }}</p>
+  <p class="mt-2 muted upper"><span class="blink">GAME OVER</span></p>
+  <a class="btn mt-3" href="{{ url_for('posts.feed') }}">Volver al inicio</a>
+</div>
+{% endblock %}

@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% from "_macros.html" import avatar, field %}
+{% block title %}Editar perfil{% endblock %}
+{% block content %}
+<div class="medium panel">
+  <h1>Editar perfil</h1>
+  <form method="post" enctype="multipart/form-data" class="stack mt-2" style="--gap:1.2rem" novalidate>
+    {{ form.hidden_tag() }}
+    <div class="row row--nowrap" style="align-items:flex-start">
+      {{ avatar(current_user, 80) }}
+      <div class="grow field">
+        <label for="{{ form.avatar.id }}">{{ form.avatar.label.text }}</label>
+        {{ form.avatar(accept="image/*") }}
+        {% if current_user.avatar %}
+          <label class="check mt-1">{{ form.remove_avatar() }} {{ form.remove_avatar.label.text }}</label>
+        {% endif %}
+      </div>
+    </div>
+    {{ field(form.bio, rows=4, help="Máx. 500 caracteres.") }}
+    {{ field(form.github_url, help="Ej: https://github.com/tu-usuario") }}
+    {{ field(form.twitter_url) }}
+    {{ field(form.website_url) }}
+    <div class="row">
+      <button class="btn">Guardar cambios</button>
+      <a class="btn btn--ghost" href="{{ url_for('profile.view', username=current_user.username) }}">Cancelar</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

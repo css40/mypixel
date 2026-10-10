@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% from "_macros.html" import avatar %}
+{% block title %}@{{ user.username }}{% endblock %}
+{% block content %}
+<div class="wide">
+  <section class="panel panel--cyan profile-head">
+    <div>{{ avatar(user, 96) }}</div>
+    <div class="grow">
+      <div class="row">
+        <h1>{{ user.username }}</h1>
+        {% if current_user.is_authenticated and current_user.id == user.id %}
+          <a class="btn btn--sm btn--ghost" href="{{ url_for('profile.edit') }}">Editar perfil</a>
+        {% elif current_user.is_authenticated %}
+          {% if is_following %}
+            <form method="post" action="{{ url_for('profile.unfollow', username=user.username) }}" class="inline">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button class="btn btn--sm btn--ghost">Siguiendo</button>
+            </form>
+          {% else %}
+            <form method="post" action="{{ url_for('profile.follow', username=user.username) }}" class="inline">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button class="btn btn--sm btn--magenta">Seguir</button>
+            </form>
+          {% endif %}
+          <a class="btn btn--sm btn--cyan" href="{{ url_for('chat.direct', username=user.username) }}">Mensaje</a>
+        {% endif %}
+      </div>
+      <p class="muted mt-1">Se unió {{ user.created_at.strftime('%d/%m/%Y') }} · {{ pagination.total }} publicaciones · {{ followers }} seguidores · {{ following_count }} siguiendo</p>
+      {% if user.bio %}<p class="mt-1" style="white-space:pre-line;max-width:60ch">{{ user.bio }}</p>{% endif %}
+      <ul class="row mt-1" style="list-style:none;padding:0;gap:1rem">
+        {% if user.github_url %}<li><a href="{{ user.github_url }}" rel="noopener nofollow ugc" target="_blank">GitHub</a></li>{% endif %}
+        {% if user.twitter_url %}<li><a href="{{ user.twitter_url }}" rel="noopener nofollow ugc" target="_blank">X / Twitter</a></li>{% endif %}
+        {% if user.website_url %}<li><a href="{{ user.website_url }}" rel="noopener nofollow ugc" target="_blank">Sitio web</a></li>{% endif %}
+      </ul>
+    </div>
+  </section>
+
+  <h2 class="mt-4">Publicaciones</h2>
+  <div class="stack mt-2" style="--gap:1.4rem">
+    {% for post in posts %}
+      {% include "posts/_card.html" %}
+    {% else %}
+      <p class="panel panel--dashed">Todavía no ha publicado nada.</p>
+    {% endfor %}
+  </div>
+  {% set endpoint = 'profile.view' %}{% set kwargs = {'username': user.username} %}
+  {% include "posts/_pagination.html" %}
+</div>
+{% endblock %}

@@ -1,0 +1,14 @@
+{% extends "chat/_layout.html" %}
+{% from "_macros.html" import field %}
+{% block title %}Nuevo grupo{% endblock %}
+{% block chat_content %}
+<div class="panel">
+  <h1>Crear grupo</h1>
+  <form method="post" class="stack mt-2" style="--gap:1.1rem;max-width:28rem" novalidate>
+    {{ form.hidden_tag() }}
+    {{ field(form.name, help="Por ejemplo: python-backend, sql-help, react-juniors") }}
+    {{ field(form.description) }}
+    <button class="btn">Crear grupo</button>
+  </form>
+</div>
+{% endblock %}

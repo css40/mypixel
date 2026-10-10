@@ -1,0 +1,28 @@
+{% extends "admin/_layout.html" %}
+{% block title %}Panel de administración{% endblock %}
+{% block admin_content %}
+<h1>Panel admin</h1>
+<div class="stats mt-2">
+  {% for label, value in [('Usuarios', stats.users), ('Posts', stats.posts), ('Comentarios', stats.comments), ('Grupos', stats.groups), ('Suspendidos', stats.banned)] %}
+    <div class="panel stat"><b>{{ value }}</b><span>{{ label }}</span></div>
+  {% endfor %}
+</div>
+<div class="mt-3" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(18rem,1fr));gap:1.25rem">
+  <div class="panel">
+    <h3 class="side-title">Últimas publicaciones</h3>
+    <ul class="stack" style="list-style:none;padding:0;--gap:.5rem">
+      {% for p in latest_posts %}
+        <li class="row between row--nowrap"><a class="truncate" href="{{ url_for('posts.detail', post_id=p.id) }}">{{ p.title }}</a><span class="muted small">{{ p.author.username }}</span></li>
+      {% endfor %}
+    </ul>
+  </div>
+  <div class="panel">
+    <h3 class="side-title">Últimos usuarios</h3>
+    <ul class="stack" style="list-style:none;padding:0;--gap:.5rem">
+      {% for u in latest_users %}
+        <li class="row between row--nowrap"><a href="{{ url_for('profile.view', username=u.username) }}">{{ u.username }}</a><span class="muted small truncate">{{ u.email }}</span></li>
+      {% endfor %}
+    </ul>
+  </div>
+</div>
+{% endblock %}

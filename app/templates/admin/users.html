@@ -1,0 +1,44 @@
+{% extends "admin/_layout.html" %}
+{% block title %}Usuarios · Admin{% endblock %}
+{% block admin_content %}
+<h1>Usuarios</h1>
+<form method="get" class="row row--nowrap mt-2">
+  <input class="input" type="search" name="q" value="{{ q }}" placeholder="Buscar por nombre o correo" autocomplete="off">
+  <button class="btn btn--cyan">Buscar</button>
+</form>
+
+<div class="table-wrap mt-2">
+  <table class="table">
+    <thead><tr><th>Usuario</th><th>Correo</th><th>Estado</th><th>Acciones</th></tr></thead>
+    <tbody>
+      {% for u in users %}
+        <tr>
+          <td><a href="{{ url_for('profile.view', username=u.username) }}">{{ u.username }}</a></td>
+          <td class="muted">{{ u.email }}</td>
+          <td>
+            {% if u.is_admin %}<span class="tag tag--yellow">Admin</span>{% endif %}
+            {% if u.is_banned %}<span class="tag tag--red">Suspendido</span>{% endif %}
+            {% if not u.is_admin and not u.is_banned %}<span class="muted">Activo</span>{% endif %}
+          </td>
+          <td>
+            {% if not u.is_admin %}
+              <form method="post" action="{{ url_for('admin.toggle_ban', user_id=u.id) }}" class="inline" data-confirm="{{ 'Reactivar' if u.is_banned else '¿Suspender' }} a {{ u.username }}?">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button class="link-btn {{ '' if u.is_banned else 'link-btn--danger' }}">{{ 'Reactivar' if u.is_banned else 'Suspender' }}</button>
+              </form>
+            {% endif %}
+            {% if u.id != current_user.id %}
+              <form method="post" action="{{ url_for('admin.toggle_admin', user_id=u.id) }}" class="inline" data-confirm="¿{{ 'Quitar admin a' if u.is_admin else 'Hacer admin a' }} {{ u.username }}?">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button class="link-btn">{{ 'Quitar admin' if u.is_admin else 'Hacer admin' }}</button>
+              </form>
+            {% endif %}
+          </td>
+        </tr>
+      {% else %}<tr><td colspan="4" class="center muted">Sin resultados.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</div>
+{% set endpoint = 'admin.users' %}{% set kwargs = {'q': q or none} %}
+{% include "posts/_pagination.html" %}
+{% endblock %}

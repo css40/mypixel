@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field %}
+{% block title %}{{ 'Editar publicación' if editing else 'Nueva publicación' }}{% endblock %}
+{% block content %}
+<div class="wide panel">
+  <h1>{{ 'Editar publicación' if editing else 'Nueva publicación' }}</h1>
+
+  <form method="post" enctype="multipart/form-data" class="stack mt-2" style="--gap:1.2rem" novalidate>
+    {{ form.hidden_tag() }}
+    {{ field(form.title) }}
+    {{ field(form.language, help="Categoría principal con la que aparece en el feed.") }}
+    {{ field(form.body, rows=6, help="Admite Markdown: **negrita**, _cursiva_, listas, enlaces, etc.") }}
+    {{ field(form.tags, help="Sepáralas con comas, ej: python, flask, orm") }}
+
+    <fieldset>
+      <legend>Bloques de código (hasta 5)</legend>
+      <div id="code-blocks" class="stack" style="--gap:1rem">
+        {% for sub in form.code_blocks %}
+          <div class="code-block-row code-row">
+            <div class="row between">
+              <span class="block-title label" style="margin:0">Bloque {{ loop.index }}</span>
+              <button type="button" class="remove-block link-btn link-btn--danger">Quitar</button>
+            </div>
+            <div class="row mt-1" style="flex-wrap:wrap">
+              <div class="grow" style="min-width:12rem">{{ sub.label(placeholder="Título opcional, ej. utils.py", class="input") }}</div>
+              <div class="grow" style="min-width:12rem">{{ sub.language(class="select") }}</div>
+            </div>
+            {{ sub.code(rows=8, placeholder="Pega tu snippet aquí", class="textarea code-textarea mt-1") }}
+          </div>
+        {% endfor %}
+      </div>
+      <button type="button" id="add-block" class="btn btn--sm btn--ghost mt-2">+ Añadir bloque</button>
+      <p class="help">Un bloque vacío se ignora al guardar.</p>
+    </fieldset>
+
+    <template id="code-block-template">
+      <div class="code-block-row code-row">
+        <div class="row between">
+          <span class="block-title label" style="margin:0">Bloque</span>
+          <button type="button" class="remove-block link-btn link-btn--danger">Quitar</button>
+        </div>
+        <div class="row mt-1" style="flex-wrap:wrap">
+          <div class="grow" style="min-width:12rem"><input type="text" name="code_blocks-__INDEX__-label" class="input" placeholder="Título opcional, ej. utils.py"></div>
+          <div class="grow" style="min-width:12rem">
+            <select name="code_blocks-__INDEX__-language" class="select">
+              {% for name, _alias in LANGUAGES %}<option value="{{ name }}">{{ name }}</option>{% endfor %}
+            </select>
+          </div>
+        </div>
+        <textarea name="code_blocks-__INDEX__-code" rows="8" class="textarea code-textarea mt-1" placeholder="Pega tu snippet aquí"></textarea>
+      </div>
+    </template>
+
+    <div class="field">
+      <label for="{{ form.attachment.id }}">{{ form.attachment.label.text }}</label>
+      {{ form.attachment() }}
+      <p class="help">Imágenes, PDF, ZIP o código. Máx. 8 MB.
+        {% if editing and post.attachment %}Actual: <strong>{{ post.attachment_name }}</strong> (subir otro lo reemplaza).{% endif %}</p>
+      {% for e in form.attachment.errors %}<p class="error">{{ e }}</p>{% endfor %}
+    </div>
+
+    <div class="row">
+      <button class="btn">{{ 'Guardar cambios' if editing else 'Publicar' }}</button>
+      <a class="btn btn--ghost" href="{{ url_for('posts.detail', post_id=post.id) if editing else url_for('posts.feed') }}">Cancelar</a>
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+  <script defer src="{{ url_for('static', filename='js/post_form.js', v=ASSET_VERSION) }}"></script>
+{% endblock %}

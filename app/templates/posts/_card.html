@@ -1,0 +1,32 @@
+{# Tarjeta de post (feed y perfil). Espera: post con post.stats ya calculado #}
+{% from "_macros.html" import avatar, lang_tag, rating_summary, like_button %}
+<article class="card">
+  <header class="row row--nowrap">
+    <a href="{{ url_for('profile.view', username=post.author.username) }}">{{ avatar(post.author, 36) }}</a>
+    <div class="grow who">
+      <a href="{{ url_for('profile.view', username=post.author.username) }}">{{ post.author.username }}</a>
+      <span class="muted"> · {{ post.created_at|timeago }}</span>
+    </div>
+    {{ lang_tag(post.language) }}
+  </header>
+
+  <h2 class="card__title"><a href="{{ url_for('posts.detail', post_id=post.id) }}">{{ post.title }}</a></h2>
+  <p class="card__preview">{{ post.body|md_preview(220) }}</p>
+
+  {% if post.tags %}
+    <ul class="row mt-1" style="list-style:none;padding:0;gap:.4rem">
+      {% for t in post.tags %}<li><a class="tag" href="{{ url_for('posts.feed', tag=t.slug) }}">#{{ t.name }}</a></li>{% endfor %}
+    </ul>
+  {% endif %}
+
+  {% if post.stats.code_blocks %}
+    <p class="mt-1 muted small">&lt;/&gt; {{ post.stats.code_blocks }} bloque{{ 's' if post.stats.code_blocks != 1 }} de código</p>
+  {% endif %}
+
+  <footer class="card__meta">
+    {{ like_button(post, url_for('auth.login', next=request.full_path) if not current_user.is_authenticated) }}
+    {{ rating_summary(post.stats) }}
+    <a class="muted" href="{{ url_for('posts.detail', post_id=post.id) }}#comments">{{ post.stats.comments }} comentarios</a>
+    {% if post.attachment %}<span class="tag">Adjunto</span>{% endif %}
+  </footer>
+</article>

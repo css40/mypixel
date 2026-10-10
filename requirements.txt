@@ -1,0 +1,21 @@
+# MyPixel - dependencias de producción
+# Las versiones fijadas (==) son las que ya usaba tu proyecto.
+Flask==3.1.3
+Flask-Login==0.6.3
+Flask-SocketIO==5.6.1
+simple-websocket>=1.0
+Flask-SQLAlchemy==3.1.1
+Flask-WTF==1.3.0
+SQLAlchemy==2.1.4
+WTForms==3.2.2
+Werkzeug==3.1.9
+Markdown==3.11
+Pillow==12.3.0
+python-dotenv==1.2.4
+
+# Base de datos PostgreSQL y servidor de producción.
+# Antes no estaban fijadas: ejecuta `pip freeze` en tu entorno y sustituye estos
+# rangos por las versiones exactas que ya funcionan en tu proyecto.
+psycopg[binary]>=3.2
+email-validator>=2.2
+gunicorn>=23.0

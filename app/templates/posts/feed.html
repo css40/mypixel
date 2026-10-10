@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}{{ active_lang or 'Inicio' }}{% endblock %}
+{% block content %}
+{% set base_args = {'lang': active_lang or none, 'tag': active_tag or none, 'q': q or none} %}
+<div class="grid-feed">
+  <section aria-label="Publicaciones" class="stack" style="--gap:1.4rem">
+    <div class="row between">
+      <h1>
+        {% if q %}Resultados: “{{ q }}”{% elif following_only %}De quienes sigues{% elif active_lang %}{{ active_lang }}{% else %}Lo último{% endif %}
+      </h1>
+      {% if active_lang or q or active_tag or following_only %}<a class="small" href="{{ url_for('posts.feed') }}">Quitar filtros</a>{% endif %}
+    </div>
+
+    <div class="tabs" aria-label="Ordenar publicaciones">
+      <a class="tab {{ 'is-active' if sort == 'recent' and not following_only }}" href="{{ url_for('posts.feed', **base_args) }}">Recientes</a>
+      <a class="tab {{ 'is-active' if sort == 'top' }}" href="{{ url_for('posts.feed', sort='top', **base_args) }}">Mejor valorados</a>
+      {% if current_user.is_authenticated %}
+        <a class="tab ml-auto {{ 'is-active' if following_only }}" href="{{ url_for('posts.feed', following=1) }}">Siguiendo</a>
+      {% endif %}
+    </div>
+    {% if active_tag %}
+      <p class="muted">Etiqueta: <strong>#{{ active_tag }}</strong> · <a href="{{ url_for('posts.feed', lang=active_lang or none, q=q or none, sort=sort if sort != 'recent' else none) }}">quitar</a></p>
+    {% endif %}
+
+    {% for post in posts %}
+      {% include "posts/_card.html" %}
+    {% else %}
+      <div class="panel panel--dashed">
+        <p>Aún no hay publicaciones {% if active_lang or q or active_tag or following_only %}con este filtro{% endif %}.</p>
+        <a class="btn mt-2" href="{{ url_for('posts.create') }}">Publica el primer snippet</a>
+      </div>
+    {% endfor %}
+
+    {% set kwargs = {'lang': active_lang or none, 'tag': active_tag or none, 'q': q or none, 'sort': sort if sort != 'recent' else none, 'following': 1 if following_only else none} %}
+    {% set endpoint = 'posts.feed' %}
+    {% include "posts/_pagination.html" %}
+  </section>
+
+  <aside aria-label="Filtros" class="stack" style="--gap:1.5rem">
+    <div class="panel">
+      <h3 class="side-title">Lenguajes</h3>
+      <ul class="menu">
+        <li><a class="{{ 'is-active' if not active_lang }}" href="{{ url_for('posts.feed', q=q or none, sort=sort if sort != 'recent' else none) }}">Todos</a></li>
+        {% for name, _alias in LANGUAGES %}
+          <li><a class="{{ 'is-active' if active_lang == name }}" href="{{ url_for('posts.feed', lang=name, q=q or none, sort=sort if sort != 'recent' else none) }}">{{ name }}<small>{{ lang_counts.get(name, 0) }}</small></a></li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% if popular_tags %}
+      <div class="panel">
+        <h3 class="side-title">Etiquetas</h3>
+        <ul class="row" style="list-style:none;padding:0;gap:.4rem">
+          {% for t in popular_tags %}
+            <li><a class="tag {{ 'tag--active' if active_tag == t.slug }}" href="{{ url_for('posts.feed', tag=t.slug) }}">#{{ t.name }} {{ t.n }}</a></li>
+          {% endfor %}
+        </ul>
+      </div>
+    {% endif %}
+  </aside>
+</div>
+{% endblock %}

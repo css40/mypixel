@@ -1,0 +1,41 @@
+{% extends "chat/_layout.html" %}
+{% block title %}Chat{% endblock %}
+{% block chat_content %}
+<div class="panel">
+  <h1>Chat</h1>
+  <form method="get" class="row row--nowrap mt-2">
+    <label class="sr-only" for="chat-q">Buscar usuario</label>
+    <input id="chat-q" class="input" type="search" name="q" value="{{ q }}" placeholder="Buscar un jugador por nombre" autocomplete="off">
+    <button class="btn btn--cyan">Buscar</button>
+  </form>
+
+  {% if q %}
+    <ul class="stack mt-2" style="list-style:none;padding:0;--gap:.6rem">
+      {% for u in found_users %}
+        <li class="row between">
+          <a href="{{ url_for('profile.view', username=u.username) }}">{{ u.username }}</a>
+          <a class="btn btn--sm" href="{{ url_for('chat.direct', username=u.username) }}">Escribir</a>
+        </li>
+      {% else %}<li class="muted">Nadie coincide con “{{ q }}”.</li>{% endfor %}
+    </ul>
+  {% endif %}
+
+  <h2 class="mt-4">Grupos para unirte</h2>
+  <ul class="stack mt-2" style="list-style:none;padding:0;--gap:.9rem">
+    {% for g in other_groups %}
+      <li class="row row--nowrap">
+        <div class="grow">
+          <p class="truncate"># {{ g.name }}</p>
+          <p class="truncate muted small">{{ g.description or 'Sin descripción' }} · {{ g.member_count }} miembros</p>
+        </div>
+        <form method="post" action="{{ url_for('chat.join_group', group_id=g.id) }}" class="inline">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button class="btn btn--sm btn--ghost">Unirme</button>
+        </form>
+      </li>
+    {% else %}
+      <li class="muted">No hay más grupos. <a href="{{ url_for('chat.new_group') }}">Crea el primero.</a></li>
+    {% endfor %}
+  </ul>
+</div>
+{% endblock %}

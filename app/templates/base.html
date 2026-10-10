@@ -1,0 +1,77 @@
+{% from "_macros.html" import avatar %}
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <meta name="theme-color" content="#0a0b1e">
+  <title>{% block title %}Inicio{% endblock %} · MyPixel</title>
+
+  <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='img/favicon.svg', v=ASSET_VERSION) }}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/pixel.css', v=ASSET_VERSION) }}">
+  {% block head %}{% endblock %}
+</head>
+<body>
+  {% include "_sprites.html" %}
+
+  <header class="site-header">
+    <nav class="site-nav container" aria-label="Principal">
+      <a class="logo" href="{{ url_for('posts.feed') }}" aria-label="MyPixel, inicio">
+        <svg class="logo__sprite" viewBox="0 0 11 8" aria-hidden="true"><use href="#px-invader"/></svg>
+        <span>MY<b>PIXEL</b></span>
+      </a>
+
+      <form class="nav-search" action="{{ url_for('posts.feed') }}" method="get" role="search">
+        <label class="sr-only" for="global-search">Buscar publicaciones</label>
+        <input id="global-search" class="input input--sm" type="search" name="q" value="{{ request.args.get('q', '') }}" placeholder="Buscar..." autocomplete="off">
+      </form>
+
+      <div class="nav-actions">
+        {% if current_user.is_authenticated %}
+          <a class="btn btn--sm" href="{{ url_for('posts.create') }}">+ Post</a>
+          {% if current_user.is_admin %}<a class="nav-link nav-link--admin" href="{{ url_for('admin.dashboard') }}">Admin</a>{% endif %}
+          <a class="nav-link" href="{{ url_for('chat.index') }}">Chat</a>
+          <a class="nav-link" href="{{ url_for('main.notifications') }}" aria-label="Notificaciones{% if unread_notifications_count %} ({{ unread_notifications_count }} sin leer){% endif %}">
+            Alertas{% if unread_notifications_count %}<span class="badge">{{ unread_notifications_count if unread_notifications_count < 100 else '99+' }}</span>{% endif %}
+          </a>
+          <a class="nav-user" href="{{ url_for('profile.view', username=current_user.username) }}" title="Mi perfil">
+            {{ avatar(current_user, 28) }}<span>{{ current_user.username }}</span>
+          </a>
+          <form action="{{ url_for('auth.logout') }}" method="post" class="inline">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="nav-link">Salir</button>
+          </form>
+        {% else %}
+          <a class="nav-link" href="{{ url_for('auth.login') }}">Entrar</a>
+          <a class="btn btn--sm" href="{{ url_for('auth.register') }}">Crear cuenta</a>
+        {% endif %}
+      </div>
+    </nav>
+  </header>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="container flashes" role="status">
+        {% for category, message in messages %}
+          <div class="flash flash--{{ category if category in ('success', 'error') else 'info' }}">&gt; {{ message }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+  <main class="container page">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="site-footer">MYPIXEL &copy; 2026 &middot; <span class="blink">INSERT COIN</span></footer>
+
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script defer src="{{ url_for('static', filename='js/main.js', v=ASSET_VERSION) }}"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

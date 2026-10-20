@@ -31,9 +31,9 @@
       {% if post.attachment %}
         <div class="attach" style="margin-top:1rem">
           {% if post.attachment_is_image %}
-            <img src="{{ url_for('main.uploaded_file', filename='attachments/' ~ post.attachment) }}" alt="Imagen adjunta: {{ post.attachment_name }}">
+            <img src="{{ post.attachment_url }}" alt="Imagen adjunta: {{ post.attachment_name }}">
           {% else %}
-            <a class="btn cyan" href="{{ url_for('main.uploaded_file', filename='attachments/' ~ post.attachment) }}" download>📎 DESCARGAR {{ post.attachment_name }}</a>
+            <a class="btn cyan" href="{{ post.attachment_url }}" download>📎 DESCARGAR {{ post.attachment_name }}</a>
           {% endif %}
         </div>
       {% endif %}

@@ -15,6 +15,7 @@ Group 1—N GroupMember N—1 User  -> membresías de grupos
 Group 1—N Message               -> chat de grupo
 """
 from datetime import datetime, timezone
+from urllib.parse import urlsplit
 
 from flask import current_app, url_for
 from flask_login import UserMixin
@@ -55,7 +56,7 @@ class User(UserMixin, db.Model):
     password_hash = db.Column(db.String(256), nullable=False)
 
     bio = db.Column(db.Text, default="", nullable=False)
-    avatar = db.Column(db.String(255))            # imagen propia: nombre de archivo en uploads/avatars
+    avatar = db.Column(db.Text)                   # URL de ImgBB o nombre local antiguo
     avatar_emoji = db.Column(db.String(16))       # avatar retro (emoji) si no hay imagen
     avatar_color = db.Column(db.String(9))        # color de fondo del avatar retro (#rrggbb)
     github_url = db.Column(db.String(255))
@@ -100,6 +101,8 @@ class User(UserMixin, db.Model):
     @property
     def avatar_url(self):
         if self.avatar:
+            if urlsplit(self.avatar).scheme in {"http", "https"}:
+                return self.avatar
             return url_for("main.uploaded_file", filename=f"avatars/{self.avatar}")
         return None
 
@@ -187,7 +190,7 @@ class Post(db.Model):
     title = db.Column(db.String(150), nullable=False)
     language = db.Column(db.String(30), nullable=False, index=True)  # categoría principal
     body = db.Column(db.Text, nullable=False)                        # Markdown
-    attachment = db.Column(db.String(255))          # nombre guardado en disco
+    attachment = db.Column(db.Text)                 # URL de ImgBB o nombre local antiguo
     attachment_name = db.Column(db.String(255))     # nombre original
     created_at = db.Column(db.DateTime, default=utcnow, nullable=False, index=True)
     updated_at = db.Column(db.DateTime, default=utcnow, onupdate=utcnow, nullable=False)
@@ -236,8 +239,17 @@ class Post(db.Model):
     def attachment_is_image(self) -> bool:
         if not self.attachment:
             return False
-        ext = self.attachment.rsplit(".", 1)[-1].lower()
+        path = urlsplit(self.attachment).path
+        ext = path.rsplit(".", 1)[-1].lower()
         return ext in current_app.config["ALLOWED_IMAGE_EXTENSIONS"]
+
+    @property
+    def attachment_url(self) -> str | None:
+        if not self.attachment:
+            return None
+        if urlsplit(self.attachment).scheme in {"http", "https"}:
+            return self.attachment
+        return url_for("main.uploaded_file", filename=f"attachments/{self.attachment}")
 
     def is_liked_by(self, user) -> bool:
         if not user.is_authenticated:

@@ -36,13 +36,12 @@ Render te pide `ADMIN_PASSWORD`: pon una contraseña propia y larga.
 **A mano:** New → Web Service →
 - Build command: `pip install -r requirements.txt`
 - Start command: `gunicorn --worker-class gthread --threads 100 --workers 1 --bind 0.0.0.0:$PORT run:app`
-- Variables: `DATABASE_URL` (Internal Database URL), `SECRET_KEY` (aleatoria), `ADMIN_EMAIL`, `ADMIN_USERNAME`, `ADMIN_PASSWORD`.
+- Variables: `DATABASE_URL` (Internal Database URL), `SECRET_KEY` (aleatoria), `ADMIN_EMAIL`, `ADMIN_USERNAME`, `ADMIN_PASSWORD` e `IMGBB_API_KEY`.
 
 ## Cosas a tener en cuenta
 
-- **Archivos subidos** (avatares con imagen y adjuntos de posts) se guardan en disco. En Render el disco del
-  plan gratuito es **efímero**: se borran en cada despliegue/reinicio. Los avatares retro (emoji) no tienen este
-  problema porque viven en la base de datos. Para conservar imágenes hace falta un *Persistent Disk* (plan de pago)
-  o guardarlas en la base de datos / un almacenamiento externo.
+- **Imágenes subidas** (avatares e imágenes adjuntas a posts) se almacenan en ImgBB; configura en Render
+  `IMGBB_API_KEY` con tu clave API. La base de datos guarda la URL HTTPS de la imagen. Otros tipos de adjuntos
+  siguen guardándose en el disco local, que puede ser efímero en Render.
 - Usa **1 solo worker** de gunicorn (el chat en tiempo real lo necesita con la configuración actual).
 - Cambia `ADMIN_PASSWORD`: el valor por defecto está escrito en el código.

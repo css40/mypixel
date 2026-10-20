@@ -20,9 +20,7 @@ mypixel/
 │   ├── sanitize.py     # Limpieza y validación de contenido
 │   └── utils.py        # Funciones auxiliares
 ├── instance/           # Base de datos SQLite local (se crea localmente)
-├── uploads/
-│   ├── avatars/        # Avatares cargados por usuarios
-│   └── attachments/    # Imágenes y archivos adjuntos de publicaciones
+├── uploads/            # Compatibilidad con archivos locales antiguos
 ├── config.py           # Configuración, variables de entorno y base de datos
 ├── run.py              # Punto de entrada de la aplicación
 ├── seed.py             # Datos de ejemplo para desarrollo local
@@ -38,7 +36,7 @@ mypixel/
 - `config.py` carga `.env`. Sin `DATABASE_URL`, usa SQLite en `instance/mypixel.db`; con ella, conecta a la base indicada, normalmente PostgreSQL en Render.
 - `app/extensions.py` centraliza SQLAlchemy, Flask-Login, CSRF y Socket.IO. El chat usa el modo `threading`.
 - `app/templates/` contiene las páginas HTML; los estilos y scripts están en `app/static/`.
-- `uploads/` guarda archivos de usuarios en el sistema de archivos del servidor.
+- Las nuevas imágenes se almacenan en ImgBB; los registros locales antiguos se siguen sirviendo desde `uploads/`.
 
 ## Ejecutar localmente
 
@@ -97,13 +95,14 @@ Mantén **un solo worker** de Gunicorn: el chat en tiempo real está configurado
 | `ADMIN_USERNAME` | Nombre de la cuenta administradora inicial. |
 | `ADMIN_EMAIL` | Correo de la cuenta administradora inicial; se usa para iniciar sesión. |
 | `ADMIN_PASSWORD` | Contraseña para crear la cuenta administradora si aún no existe. Configúrala en Render, nunca en el repositorio. |
+| `IMGBB_API_KEY` | Clave API de ImgBB para almacenar imágenes; configúrala como secreto y nunca la incluyas en el repositorio. |
 | `RENDER` | Render la define en el servicio; activa la configuración de producción. |
 
 La cuenta administradora se crea al iniciar la aplicación si todavía no existe una cuenta administradora. Cambiar las variables después no cambia la contraseña de una cuenta ya existente.
 
 ### Almacenamiento de imágenes y archivos
 
-Los avatares cargados y adjuntos se guardan en `uploads/`. El disco del servicio Render puede ser efímero: esos archivos pueden perderse al reiniciar o desplegar. Si deben conservarse, configura un disco persistente o integra almacenamiento externo y actualiza la lógica de carga/lectura en `config.py` y las rutas que gestionan esos archivos.
+Los avatares y las imágenes adjuntas nuevas se suben a ImgBB y su URL HTTPS se guarda en la base de datos. Configura `IMGBB_API_KEY` en tu entorno local o en Render antes de permitir subidas de imágenes. Los adjuntos que no son imágenes y los archivos locales existentes siguen usando el disco local; pueden perderse si ese disco es efímero.
 
 La base de datos y los archivos subidos son almacenamientos separados. Los datos de SQLite local no se copian automáticamente a PostgreSQL en Render; se necesita una migración o importación explícita si se desean conservar.
 

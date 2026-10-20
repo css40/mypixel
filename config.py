@@ -30,6 +30,7 @@ def _database_url() -> str:
 
 class Config:
     SECRET_KEY = os.environ.get("SECRET_KEY", "dev-only-change-me")
+    IMGBB_API_KEY = os.environ.get("IMGBB_API_KEY", "")
 
     # Base de datos (PostgreSQL en producción, SQLite en desarrollo local)
     SQLALCHEMY_DATABASE_URI = _database_url()

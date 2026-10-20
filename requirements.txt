@@ -13,3 +13,4 @@ WTForms==3.2.2
 gunicorn
 psycopg[binary]
 email-validator
+requests

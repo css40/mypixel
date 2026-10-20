@@ -1,9 +1,12 @@
 """Utilidades: subida segura de archivos, Markdown seguro y helpers."""
 import re as _re
 import uuid
+from io import BytesIO
 from pathlib import Path
+from urllib.parse import urlsplit
 
 import markdown as _markdown
+import requests
 
 from flask import current_app
 from PIL import Image, ImageOps, UnidentifiedImageError
@@ -17,6 +20,37 @@ def _ext(filename: str) -> str:
     return filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
 
 
+def _upload_image_to_imgbb(file, filename: str) -> str:
+    """Sube una imagen a ImgBB y devuelve su URL HTTPS permanente."""
+    api_key = current_app.config.get("IMGBB_API_KEY")
+    if not api_key:
+        raise ValueError(
+            "El almacenamiento de imágenes no está configurado. "
+            "Contacta al administrador."
+        )
+    try:
+        response = requests.post(
+            "https://api.imgbb.com/1/upload",
+            data={"key": api_key},
+            files={"image": (filename, file)},
+            timeout=30,
+        )
+        response.raise_for_status()
+        result = response.json()
+    except (requests.RequestException, ValueError) as exc:
+        current_app.logger.error("Falló la subida de imagen a ImgBB: %s", exc)
+        raise ValueError(
+            "No se pudo subir la imagen al almacenamiento. Inténtalo de nuevo."
+        ) from exc
+
+    image_data = result.get("data") if isinstance(result, dict) else None
+    image_url = image_data.get("url") if isinstance(image_data, dict) else None
+    if not isinstance(image_url, str) or urlsplit(image_url).scheme != "https":
+        current_app.logger.error("ImgBB no devolvió una URL HTTPS válida.")
+        raise ValueError("No se pudo obtener la URL segura de la imagen.")
+    return image_url
+
+
 def save_attachment(file_storage):
     """Guarda un adjunto de post. Devuelve (nombre_guardado, nombre_original)
     o (None, None) si no hay archivo. Lanza ValueError si no está permitido."""
@@ -27,6 +61,11 @@ def save_attachment(file_storage):
     ext = _ext(original)
     if ext not in current_app.config["ALLOWED_ATTACHMENT_EXTENSIONS"]:
         raise ValueError("Tipo de archivo no permitido.")
+    if ext in current_app.config["ALLOWED_IMAGE_EXTENSIONS"]:
+        file_storage.stream.seek(0)
+        image_url = _upload_image_to_imgbb(file_storage.stream, original)
+        return image_url, original
+
     stored = f"{uuid.uuid4().hex}.{ext}"
     dest = Path(current_app.config["UPLOAD_FOLDER"]) / "attachments" / stored
     file_storage.save(dest)
@@ -34,7 +73,7 @@ def save_attachment(file_storage):
 
 
 def save_avatar(file_storage):
-    """Valida que sea imagen, la recorta a 256x256 y la guarda como PNG."""
+    """Valida que sea imagen, la recorta a 256x256 y la sube a ImgBB."""
     if not isinstance(file_storage, FileStorage) or not file_storage.filename:
         return None
     if _ext(file_storage.filename) not in current_app.config["ALLOWED_IMAGE_EXTENSIONS"]:
@@ -45,13 +84,15 @@ def save_avatar(file_storage):
         img = ImageOps.fit(img, (256, 256), Image.LANCZOS)
     except (UnidentifiedImageError, OSError):
         raise ValueError("El archivo no es una imagen válida.")
-    stored = f"{uuid.uuid4().hex}.png"
-    img.save(Path(current_app.config["UPLOAD_FOLDER"]) / "avatars" / stored, "PNG")
-    return stored
+    image = BytesIO()
+    image.name = "avatar.png"
+    img.save(image, "PNG")
+    image.seek(0)
+    return _upload_image_to_imgbb(image, image.name)
 
 
 def delete_upload(subfolder: str, filename) -> None:
-    if not filename:
+    if not filename or urlsplit(str(filename)).scheme in {"http", "https"}:
         return
     path = Path(current_app.config["UPLOAD_FOLDER"]) / subfolder / filename
     try:

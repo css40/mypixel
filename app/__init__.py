@@ -61,6 +61,7 @@ def create_app(config_name: str = None) -> Flask:
     with app.app_context():
         db.create_all()
         _ensure_columns(app)
+        _ensure_url_columns(app)
         _ensure_admin(app)
 
     return app
@@ -84,6 +85,33 @@ def _ensure_columns(app: Flask) -> None:
     except Exception as exc:  # noqa: BLE001 - nunca impedir el arranque por esto
         db.session.rollback()
         app.logger.error("No se pudieron revisar las columnas: %s", exc)
+
+
+def _ensure_url_columns(app: Flask) -> None:
+    """Amplía las columnas de PostgreSQL para guardar URLs de imágenes."""
+    from sqlalchemy import Text, inspect, text
+
+    if db.engine.dialect.name != "postgresql":
+        return
+
+    columns = {
+        "users": ("avatar",),
+        "posts": ("attachment",),
+    }
+    inspector = inspect(db.engine)
+    try:
+        for table, names in columns.items():
+            existing = {column["name"]: column["type"]
+                        for column in inspector.get_columns(table)}
+            for name in names:
+                if name in existing and not isinstance(existing[name], Text):
+                    db.session.execute(text(
+                        f'ALTER TABLE "{table}" ALTER COLUMN "{name}" TYPE TEXT'
+                    ))
+        db.session.commit()
+    except Exception as exc:  # noqa: BLE001
+        db.session.rollback()
+        app.logger.error("No se pudieron ampliar las columnas de URL: %s", exc)
 
 
 def _ensure_admin(app: Flask) -> None:

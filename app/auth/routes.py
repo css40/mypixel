@@ -77,11 +77,13 @@ def social_login(provider):
 
     next_url = request.args.get("next", "")
     session[f"oauth_next_{provider}"] = next_url if is_safe_next(next_url) else ""
-    callback_url = url_for("auth.authorize", provider=provider, _external=True)
+    callback_url = (
+        f"{current_app.config['OAUTH_REDIRECT_BASE_URL'].rstrip('/')}"
+        f"/authorize/{provider}"
+    )
     return client.authorize_redirect(callback_url)
 
 
-@bp.route("/authorize/<provider>")
 def authorize(provider):
     if provider not in {"google", "github"}:
         return redirect(url_for("auth.login"))

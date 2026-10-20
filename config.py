@@ -35,6 +35,9 @@ class Config:
     GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET", "")
     GITHUB_CLIENT_ID = os.environ.get("GITHUB_CLIENT_ID", "")
     GITHUB_CLIENT_SECRET = os.environ.get("GITHUB_CLIENT_SECRET", "")
+    OAUTH_REDIRECT_BASE_URL = os.environ.get(
+        "OAUTH_REDIRECT_BASE_URL", "https://mypixel-3po7.onrender.com"
+    ).strip().rstrip("/")
 
     # Base de datos (PostgreSQL en producción, SQLite en desarrollo local)
     SQLALCHEMY_DATABASE_URI = _database_url()

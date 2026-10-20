@@ -37,6 +37,7 @@ def create_app(config_name: str = None) -> Flask:
     # Blueprints
     from .admin import bp as admin_bp
     from .auth import bp as auth_bp
+    from .auth.routes import authorize
     from .chat import bp as chat_bp
     from .main import bp as main_bp
     from .posts import bp as posts_bp
@@ -44,6 +45,12 @@ def create_app(config_name: str = None) -> Flask:
 
     app.register_blueprint(main_bp)
     app.register_blueprint(auth_bp, url_prefix="/auth")
+    app.add_url_rule(
+        "/authorize/<provider>",
+        endpoint="auth.authorize",
+        view_func=authorize,
+        methods=["GET"],
+    )
     app.register_blueprint(posts_bp)
     app.register_blueprint(profile_bp, url_prefix="/u")
     app.register_blueprint(chat_bp, url_prefix="/chat")

@@ -35,3 +35,5 @@ services:
         sync: false
       - key: GITHUB_CLIENT_SECRET
         sync: false
+      - key: OAUTH_REDIRECT_BASE_URL
+        value: https://mypixel-3po7.onrender.com

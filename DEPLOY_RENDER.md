@@ -46,5 +46,7 @@ Render te pide `ADMIN_PASSWORD`: pon una contraseña propia y larga.
 - Usa **1 solo worker** de gunicorn (el chat en tiempo real lo necesita con la configuración actual).
 - Cambia `ADMIN_PASSWORD`: el valor por defecto está escrito en el código.
 - Configura `GOOGLE_CLIENT_ID` y `GOOGLE_CLIENT_SECRET` y/o `GITHUB_CLIENT_ID` y `GITHUB_CLIENT_SECRET`.
-  Registra como callback `https://TU-DOMINIO/auth/authorize/google` en Google y
-  `https://TU-DOMINIO/auth/authorize/github` en GitHub. Mantén los secretos fuera del repositorio.
+  Registra como callback `https://mypixel-3po7.onrender.com/authorize/google` en Google y
+  `https://mypixel-3po7.onrender.com/authorize/github` en GitHub. Mantén los secretos fuera del repositorio.
+  La app usa estas URLs raíz exactas para el parámetro `redirect_uri`. Si cambia el dominio, actualiza
+  `OAUTH_REDIRECT_BASE_URL` y registra las nuevas URLs de callback en ambos proveedores.

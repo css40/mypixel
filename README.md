@@ -96,8 +96,9 @@ Mantén **un solo worker** de Gunicorn: el chat en tiempo real está configurado
 | `ADMIN_EMAIL` | Correo de la cuenta administradora inicial; se usa para iniciar sesión. |
 | `ADMIN_PASSWORD` | Contraseña para crear la cuenta administradora si aún no existe. Configúrala en Render, nunca en el repositorio. |
 | `IMGBB_API_KEY` | Clave API de ImgBB para almacenar imágenes; configúrala como secreto y nunca la incluyas en el repositorio. |
-| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Credenciales OAuth de Google. Callback: `/auth/authorize/google`. |
-| `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` | Credenciales OAuth de GitHub. Callback: `/auth/authorize/github`. |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Credenciales OAuth de Google. Callback: `/authorize/google`. |
+| `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` | Credenciales OAuth de GitHub. Callback: `/authorize/github`. |
+| `OAUTH_REDIRECT_BASE_URL` | Origen HTTPS usado para los callbacks; por defecto `https://mypixel-3po7.onrender.com`. |
 | `RENDER` | Render la define en el servicio; activa la configuración de producción. |
 
 La cuenta administradora se crea al iniciar la aplicación si todavía no existe una cuenta administradora. Cambiar las variables después no cambia la contraseña de una cuenta ya existente.
@@ -106,8 +107,8 @@ La cuenta administradora se crea al iniciar la aplicación si todavía no existe
 
 Configura las credenciales OAuth de cada proveedor en tu entorno local o en Render. Registra en la consola del proveedor la URL pública exacta de callback:
 
-- Google: `https://TU-DOMINIO/auth/authorize/google`
-- GitHub: `https://TU-DOMINIO/auth/authorize/github`
+- Google: `https://mypixel-3po7.onrender.com/authorize/google`
+- GitHub: `https://mypixel-3po7.onrender.com/authorize/github`
 
 Google debe devolver `email_verified=true`. Para GitHub, la app solicita `read:user` y `user:email` y solo acepta direcciones verificadas. El usuario nuevo se crea con correo verificado y contraseña aleatoria no conocida; un usuario existente con el mismo correo inicia sesión en su cuenta.
 

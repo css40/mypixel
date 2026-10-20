@@ -97,7 +97,6 @@ Mantén **un solo worker** de Gunicorn: el chat en tiempo real está configurado
 | `ADMIN_USERNAME` | Nombre de la cuenta administradora inicial. |
 | `ADMIN_EMAIL` | Correo de la cuenta administradora inicial; se usa para iniciar sesión. |
 | `ADMIN_PASSWORD` | Contraseña para crear la cuenta administradora si aún no existe. Configúrala en Render, nunca en el repositorio. |
-| `PAYPAL_USERNAME` | Usuario de PayPal.Me que aparece en la opción de apoyo. |
 | `RENDER` | Render la define en el servicio; activa la configuración de producción. |
 
 La cuenta administradora se crea al iniciar la aplicación si todavía no existe una cuenta administradora. Cambiar las variables después no cambia la contraseña de una cuenta ya existente.

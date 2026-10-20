@@ -28,10 +28,7 @@ def md_preview_filter(text, length=200):
 @bp.route("/acerca")
 def about():
     """Guía de la web: cómo funciona, cómo publicar, cómo usar el chat y cómo apoyar."""
-    user = (current_app.config.get("PAYPAL_USERNAME") or "").strip().strip("/")
-    configured = bool(user) and user != "TU_USUARIO_PAYPAL"
-    return render_template("about.html", paypal_user=user,
-                           paypal_url=f"https://www.paypal.me/{user}" if configured else None)
+    return render_template("about.html")
 
 
 @bp.route("/notifications")

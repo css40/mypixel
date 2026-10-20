@@ -44,26 +44,36 @@
     ta.style.opacity = "0";
     document.body.appendChild(ta);
     ta.select();
-    document.execCommand("copy");
+    const copied = document.execCommand("copy");
     ta.remove();
+    if (!copied) throw new Error("El navegador no pudo copiar el texto.");
   }
 
   document.addEventListener("click", async (ev) => {
     const btn = ev.target.closest(".copy-btn");
     if (!btn) return;
-    const code = btn.closest(".code-block")?.querySelector("code");
-    if (!code) return;
+    const targetId = btn.dataset.copyTarget;
+    const target = targetId
+      ? document.getElementById(targetId)
+      : btn.closest(".code-block")?.querySelector("code");
+    if (!target) return;
+    const text = "value" in target ? target.value : target.textContent;
     try {
-      await copyText(code.textContent);
+      await copyText(text);
       const original = btn.textContent;
       btn.textContent = "¡COPIADO!";
       btn.classList.add("is-copied");
+      const status = btn.closest(".support-account")?.querySelector(".copy-status");
+      if (status) status.textContent = "Número copiado al portapapeles.";
       setTimeout(() => {
         btn.textContent = original;
         btn.classList.remove("is-copied");
       }, 1800);
     } catch (err) {
       btn.textContent = "ERROR";
+      const status = btn.closest(".support-account")?.querySelector(".copy-status");
+      if (status) status.textContent = "No se pudo copiar. Selecciona el número y cópialo manualmente.";
+      console.error("No se pudo copiar al portapapeles", err);
     }
   });
 

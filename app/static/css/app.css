@@ -498,6 +498,13 @@ h1.ptitle { font-size: 1.05rem !important; }
 .faq dt:first-child { margin-top: 0; }
 .faq dd { margin: .2rem 0 0; }
 .support { border-color: var(--pink); box-shadow: 4px 4px 0 var(--pink); }
+.support-account {
+  display: grid; gap: .25rem; width: fit-content; max-width: 100%; margin-top: .7rem; padding: .7rem .8rem;
+  border: 2px dashed var(--pink); background: var(--field);
+}
+.support-account .row { align-items: stretch; }
+.support-account input { width: auto; max-width: 100%; font-family: var(--mono); user-select: all; }
+.copy-status { min-height: 1.2em; }
 .guide .code-block { margin: .6rem 0 .8rem; }
 .guide .code-block pre code { white-space: pre; }
 

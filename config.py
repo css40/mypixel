@@ -52,10 +52,6 @@ class Config:
     ADMIN_EMAIL = os.environ.get("ADMIN_EMAIL", "admin@mypixel.com")
     ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "Admin#MyPixel2026")
 
-    # Apoyar al desarrollador (PayPal.Me). Pon SOLO tu usuario de PayPal.Me, ej. "juanperez"
-    # (paypal.me/juanperez). Se puede definir aquí o con la variable de entorno PAYPAL_USERNAME.
-    PAYPAL_USERNAME = os.environ.get("PAYPAL_USERNAME", "TU_USUARIO_PAYPAL")
-
     # Avatares retro (los mismos de RetroPixel): emoji + color de fondo
     AVATAR_EMOJIS = ["👾", "🦄", "🐸", "🤖", "👻", "🐙", "🌵", "🍄", "🚀", "🎮", "💾", "🕹️"]
     AVATAR_COLORS = ["#a35a5a", "#5f8f8b", "#c9a24a", "#7d6b8f", "#7f9a73", "#b87a4b"]

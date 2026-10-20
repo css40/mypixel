@@ -11,7 +11,7 @@
     <div class="body hero-grid">
       <div>
         <h1 class="title">¡HOLA, PLAYER! 👋</h1>
-        <p>Soy Sr. <b>MyPixel</b> y te enseño cómo funciona todo. MyPixel es una comunidad retro para
+        <p>Soy Sr. <b>MyPixel</b> y te enseño cómo funciona todo. My_Pixel es una comunidad retro para
           <b>compartir código</b>, aprender de otros, valorar lo mejor y <b>chatear en vivo</b> con otros devs.</p>
         <nav class="chips" aria-label="Secciones de la guía">
           <a href="#cuenta">Tu cuenta</a>
@@ -141,16 +141,16 @@
       <img class="mascot" src="{{ img('apoyo') }}" alt="Zorro abrazando un corazón" width="309" height="340" loading="lazy">
       <div>
         <h2 class="title sm">APOYA AL DESARROLLADOR ♥</h2>
-        <p>MyPixel lo hago yo, con mucho cariño y píxeles, y es <b>gratis</b> para todos. Si te sirve y quieres ayudarme  y a seguir mejorándolo, puedes dejarme un aporte voluntario por <b>PayPal</b>. ¡Cualquier cantidad se agradece muchísimo!</p>
-        <div class="row">
-          {% if paypal_url %}
-            <a class="btn pink" href="{{ paypal_url }}" target="_blank" rel="noopener noreferrer">♥ APOYAR CON PAYPAL</a>
-            <small class="muted">paypal.me/{{ paypal_user }}</small>
-          {% else %}
-            <span class="btn pink" aria-disabled="true" style="opacity:.6;cursor:not-allowed">♥ APOYAR CON PAYPAL · PRÓXIMAMENTE</span>
-          {% endif %}
+        <p>MyPixel lo hago yo, con mucho cariño y píxeles, y es <b>gratis</b> para todos. Si te sirve y quieres ayudarme a seguir mejorándolo, puedes hacer una transferencia voluntaria a esta cuenta de ahorros Banpro. ¡Cualquier cantidad se agradece muchísimo!</p>
+        <div class="support-account">
+          <label for="support-account-number">Cuenta de ahorros Banpro</label>
+          <div class="row">
+            <input id="support-account-number" type="text" value="10020000195318" readonly aria-label="Número de cuenta de ahorros Banpro">
+            <button class="btn pink copy-btn" type="button" data-copy-target="support-account-number">COPIAR NÚMERO</button>
+          </div>
+          <small class="copy-status" aria-live="polite"></small>
         </div>
-        <p class="help">Se abre PayPal en otra pestaña. Es 100% opcional: compartir código y usar la web seguirá siendo gratis. ¡Gracias por estar aquí!</p>
+        <p class="help">El aporte es 100% opcional: compartir código y usar la web seguirá siendo gratis. ¡Gracias por estar aquí!</p>
       </div>
     </div>
   </section>

@@ -23,7 +23,5 @@ services:
         value: admin
       - key: ADMIN_EMAIL
         value: admin@mypixel.com
-      - key: PAYPAL_USERNAME
-        value: TU_USUARIO_PAYPAL
       - key: ADMIN_PASSWORD
         sync: false

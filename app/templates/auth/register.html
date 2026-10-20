@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field, winbar %}
+{% block title %}Crear cuenta{% endblock %}
+{% block content %}
+<div class="auth">
+  <img class="auth-mascot" src="{{ url_for('static', filename='img/' ~ ('saludando' if False else 'perfil') ~ '.png') }}" alt="" width="120" height="114">
+  <a class="logo" href="{{ url_for('posts.feed') }}"><img class="logo-ico" src="{{ url_for('static', filename='img/icono1.png') }}" alt="" width="48" height="41">MY<i>_</i>PIXEL</a>
+  <div class="tabs"><a href="{{ url_for('auth.login') }}">LOGIN</a><a href="{{ url_for('auth.register') }}" class="on">REGISTRO</a></div>
+  <div class="win">
+    {{ winbar('NEW_PLAYER.EXE', 'c-yellow') }}
+    <form class="body" method="post" novalidate>
+      {{ form.hidden_tag() }}
+      {{ field(form.username) }}
+      {{ field(form.email) }}
+      {{ field(form.password, help="Mínimo 8 caracteres.") }}
+      {{ field(form.confirm) }}
+      <p class="help">Te asignaremos un avatar retro; luego puedes cambiarlo o subir tu propia foto.</p>
+      <div class="row"><button class="btn pink block">CREAR CUENTA ▶</button></div>
+    </form>
+  </div>
+  <div class="marq"><span>★ PLAYER 1 READY ★ ELIGE TU AVATAR ★ PUBLICA TU PRIMER SNIPPET ★ INSERT COIN TO CONTINUE ★</span></div>
+</div>
+{% endblock %}

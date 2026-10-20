@@ -1,0 +1,44 @@
+{# Tarjeta de post para feed y perfil. Espera: post, liked (bool) #}
+{% from "_macros.html" import avatar, lang_tag, rating_summary, winbar %}
+<article class="win post" id="post-{{ post.id }}">
+  <div class="bar {{ ['', 'c-cyan', 'c-yellow', 'c-violet', 'c-green'][post.id % 5] }}">
+    <div class="dots"><span></span><span></span><span></span></div>
+    <b>POST_{{ '%03d'|format(post.id) }}.TXT</b><span>{{ post.created_at|timeago }}</span>
+  </div>
+  <div class="body">
+    <div class="head">
+      <a class="av-link" href="{{ url_for('profile.view', username=post.author.username) }}">{{ avatar(post.author, 40) }}</a>
+      <div>
+        <a class="who" href="{{ url_for('profile.view', username=post.author.username) }}">@{{ post.author.username }}</a>
+        <small>{{ post.created_at.strftime('%d/%m/%Y %H:%M') }}</small>
+      </div>
+      {{ lang_tag(post.language) }}
+    </div>
+
+    <h2 class="ptitle"><a href="{{ url_for('posts.detail', post_id=post.id) }}">{{ post.title }}</a></h2>
+    <p class="excerpt">{{ post.body|md_preview(220) }}</p>
+
+    {% if post.tags %}
+      <ul class="tags">
+        {% for t in post.tags %}<li><a href="{{ url_for('posts.feed', tag=t.slug) }}">#{{ t.name }}</a></li>{% endfor %}
+      </ul>
+    {% endif %}
+
+    {% if post.code_blocks %}
+      <p class="infobar" style="margin-top:.8rem"><span><span class="codechip">&lt;/&gt;</span>{{ post.code_blocks|length }} bloque{{ 's' if post.code_blocks|length != 1 }} de código</span></p>
+    {% endif %}
+
+    <div class="infobar">
+      <button type="button" class="like-btn {{ 'is-liked' if liked }}"
+              data-url="{{ url_for('posts.toggle_like', post_id=post.id) }}"
+              aria-pressed="{{ 'true' if liked else 'false' }}" aria-label="Me gusta"
+              {% if not current_user.is_authenticated %}data-login="{{ url_for('auth.login', next=request.full_path) }}"{% endif %}>
+        <svg class="like-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7.5-4.6-9.6-9.2C.8 8.3 2.7 4.5 6.4 4.5c2 0 3.5 1 4.6 2.6h2c1.1-1.6 2.6-2.6 4.6-2.6 3.7 0 5.6 3.8 4 7.3C19.5 16.4 12 21 12 21z"/></svg>
+        <span class="like-count">{{ post.like_count }}</span>
+      </button>
+      {{ rating_summary(post) }}
+      <a href="{{ url_for('posts.detail', post_id=post.id) }}#comments">💬 {{ post.comment_count }} comentarios</a>
+      {% if post.attachment %}<span class="muted">📎 Adjunto</span>{% endif %}
+    </div>
+  </div>
+</article>

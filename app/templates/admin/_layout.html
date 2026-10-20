@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% from "_macros.html" import winbar %}
+{% block content %}
+<div class="layout">
+  <section>{% block admin_content %}{% endblock %}</section>
+  <aside class="side" aria-label="Administración">
+    <div class="win">
+      {{ winbar('ADMIN', 'c-pink') }}
+      <div class="body" style="padding:.6rem">
+        <ul class="menu">
+          <li><a href="{{ url_for('admin.dashboard') }}" class="{{ 'on' if request.endpoint == 'admin.dashboard' }}">Resumen</a></li>
+          <li><a href="{{ url_for('admin.users') }}" class="{{ 'on' if request.endpoint == 'admin.users' }}">Usuarios</a></li>
+          <li><a href="{{ url_for('admin.posts') }}" class="{{ 'on' if request.endpoint == 'admin.posts' }}">Publicaciones</a></li>
+        </ul>
+      </div>
+    </div>
+  </aside>
+</div>
+{% endblock %}

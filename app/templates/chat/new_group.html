@@ -1,0 +1,14 @@
+{% extends "chat/_layout.html" %}
+{% from "_macros.html" import field, winbar %}
+{% block title %}Nuevo grupo{% endblock %}
+{% block chat_content %}
+<div class="win">
+  {{ winbar('NUEVO_GRUPO.EXE', 'c-yellow') }}
+  <form method="post" class="body" novalidate style="max-width:520px">
+    {{ form.hidden_tag() }}
+    {{ field(form.name, help="Por ejemplo: python-backend, sql-help, react-juniors") }}
+    {{ field(form.description) }}
+    <div class="row"><button class="btn pink">CREAR GRUPO ▶</button></div>
+  </form>
+</div>
+{% endblock %}

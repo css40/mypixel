@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% from "_macros.html" import avatar, field, winbar %}
+{% block title %}Editar perfil{% endblock %}
+{% block content %}
+{% set mode = form.avatar_mode.data or ('image' if current_user.avatar else 'emoji') %}
+{% set cur_emoji = form.avatar_emoji.data or current_user.display_emoji %}
+{% set cur_color = form.avatar_color.data or current_user.display_color %}
+<div style="max-width:720px;margin:0 auto">
+<div class="win">
+  {{ winbar('EDITAR_PERFIL.EXE', 'c-violet') }}
+  <form method="post" enctype="multipart/form-data" class="body" novalidate id="profile-form">
+    {{ form.hidden_tag() }}
+
+    <p class="lbl" style="margin-top:0">TU AVATAR</p>
+    <div class="avedit">
+      <span id="av-preview-wrap">
+        {% if current_user.avatar_url and mode == 'image' %}
+          <img id="av-preview-img" class="av" src="{{ current_user.avatar_url }}" alt="Avatar actual" style="--s:96px" width="96" height="96">
+          <span id="av-preview" class="av hidden" style="--s:96px;--bg:{{ cur_color }}">{{ cur_emoji }}</span>
+        {% else %}
+          <img id="av-preview-img" class="av hidden" alt="Vista previa" style="--s:96px" width="96" height="96">
+          <span id="av-preview" class="av" style="--s:96px;--bg:{{ cur_color }}">{{ cur_emoji }}</span>
+        {% endif %}
+      </span>
+      <p>Elige un avatar retro o sube tu propia imagen. Puedes cambiarlo cuando quieras.</p>
+    </div>
+
+    <div class="mode" role="radiogroup" aria-label="Tipo de avatar">
+      {% for value, text in form.avatar_mode.choices %}
+        <label><input type="radio" name="avatar_mode" value="{{ value }}" {{ 'checked' if mode == value }}><span>{{ '👾 AVATAR RETRO' if value == 'emoji' else '🖼 MI IMAGEN' }}</span></label>
+      {% endfor %}
+    </div>
+
+    <div id="panel-emoji" class="{{ 'hidden' if mode != 'emoji' }}">
+      <p class="lbl">PERSONAJE</p>
+      <div class="pick">
+        {% for e in config.AVATAR_EMOJIS %}
+          <label><input type="radio" name="avatar_emoji" value="{{ e }}" {{ 'checked' if e == cur_emoji }}><span>{{ e }}</span></label>
+        {% endfor %}
+      </div>
+      <p class="lbl">COLOR</p>
+      <div class="pick col">
+        {% for c in config.AVATAR_COLORS %}
+          <label><input type="radio" name="avatar_color" value="{{ c }}" aria-label="Color {{ c }}" {{ 'checked' if c == cur_color }}><span style="--k:{{ c }}">{{ c }}</span></label>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div id="panel-image" class="{{ 'hidden' if mode != 'image' }}">
+      <label for="{{ form.avatar.id }}">SUBE TU IMAGEN</label>
+      {{ form.avatar(accept="image/png,image/jpeg,image/gif,image/webp") }}
+      <p class="help">PNG, JPG, GIF o WEBP. Se recorta a un cuadrado de 256×256.
+        {% if current_user.avatar %}Ya tienes una imagen; si no subes otra, se queda la actual.{% endif %}</p>
+      {% for e in form.avatar.errors %}<p class="err">⚠ {{ e }}</p>{% endfor %}
+    </div>
+
+    {{ field(form.bio, rows=4, help="Máx. 500 caracteres.") }}
+    {{ field(form.github_url, help="Ej: https://github.com/tu-usuario") }}
+    {{ field(form.twitter_url) }}
+    {{ field(form.website_url) }}
+
+    <div class="row" style="margin-top:1.4rem">
+      <button class="btn pink">GUARDAR ▶</button>
+      <a class="btn ghost" href="{{ url_for('profile.view', username=current_user.username) }}">CANCELAR</a>
+    </div>
+  </form>
+</div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  "use strict";
+  const form = document.getElementById("profile-form");
+  const pEmoji = document.getElementById("panel-emoji"), pImage = document.getElementById("panel-image");
+  const pv = document.getElementById("av-preview"), pvImg = document.getElementById("av-preview-img");
+  const file = form.querySelector('input[type="file"]');
+  const saved = {{ (current_user.avatar_url or '')|tojson }};
+  const val = (name) => (form.querySelector(`input[name="${name}"]:checked`) || {}).value;
+
+  function refresh() {
+    const mode = val("avatar_mode");
+    pEmoji.classList.toggle("hidden", mode !== "emoji");
+    pImage.classList.toggle("hidden", mode !== "image");
+    if (mode === "image") {
+      const f = file && file.files[0];
+      const src = f ? URL.createObjectURL(f) : saved;
+      if (src) { pvImg.src = src; pvImg.classList.remove("hidden"); pv.classList.add("hidden"); return; }
+    }
+    pv.textContent = val("avatar_emoji") || pv.textContent;
+    pv.style.setProperty("--bg", val("avatar_color") || "#a35a5a");
+    pv.classList.remove("hidden"); pvImg.classList.add("hidden");
+  }
+  form.addEventListener("change", refresh);
+  refresh();
+})();
+</script>
+{% endblock %}

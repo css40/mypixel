@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+{% from "_macros.html" import winbar, code_block %}
+{% block title %}Acerca de{% endblock %}
+{% block content %}
+{% macro img(n) %}{{ url_for('static', filename='img/' ~ n ~ '.png') }}{% endmacro %}
+<div class="guide">
+
+  {# ---------- portada ---------- #}
+  <section class="win guide-hero">
+    {{ winbar('ACERCA_DE.EXE', 'c-violet') }}
+    <div class="body hero-grid">
+      <div>
+        <h1 class="title">¡HOLA, PLAYER! 👋</h1>
+        <p>Soy Sr. <b>MyPixel</b> y te enseño cómo funciona todo. MyPixel es una comunidad retro para
+          <b>compartir código</b>, aprender de otros, valorar lo mejor y <b>chatear en vivo</b> con otros devs.</p>
+        <nav class="chips" aria-label="Secciones de la guía">
+          <a href="#cuenta">Tu cuenta</a>
+          <a href="#buscar">Buscar</a>
+          <a href="#publicar">Publicar</a>
+          <a href="#interactuar">Comentar y valorar</a>
+          <a href="#avisos">Avisos</a>
+          <a href="#chat">Chat y código</a>
+          <a href="#apoyar">Apoyar ♥</a>
+          <a href="#dudas">Dudas</a>
+        </nav>
+      </div>
+      <img class="mascot big" src="{{ img('saludando') }}" alt="Zorro pixelado saludando" width="363" height="344">
+    </div>
+  </section>
+
+  {# ---------- cuenta ---------- #}
+  <section class="win" id="cuenta">
+    {{ winbar('1 · TU_CUENTA.EXE', 'c-cyan') }}
+    <div class="body gsec">
+      <img class="mascot" src="{{ img('perfil') }}" alt="Zorro mostrando una tarjeta de perfil" width="348" height="330" loading="lazy">
+      <div>
+        <h2 class="title sm">CREA TU CUENTA Y TU PERFIL</h2>
+        <ol class="steps">
+          <li>Pulsa <b>REGISTRO</b> arriba, elige un nombre de usuario, tu correo y una contraseña (mínimo 8 caracteres).</li>
+          <li>Entra con tu <b>correo</b> y contraseña desde <b>ENTRAR</b>.</li>
+          <li>Haz clic en tu <b>@usuario</b> (arriba a la derecha) y luego en <b>✎ EDITAR PERFIL</b>: elige un avatar retro o sube tu propia imagen, escribe tu bio y añade tus enlaces (GitHub, X, web).</li>
+          <li>En el perfil de otras personas puedes pulsar <b>+ SEGUIR</b> para ver sus posts en la pestaña <b>SIGUIENDO</b> del inicio, o <b>✉ MENSAJE</b> para escribirles.</li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  {# ---------- buscar ---------- #}
+  <section class="win" id="buscar">
+    {{ winbar('2 · BUSCAR.EXE', 'c-yellow') }}
+    <div class="body gsec flip">
+      <img class="mascot" src="{{ img('buscar') }}" alt="Zorro con una lupa" width="306" height="333" loading="lazy">
+      <div>
+        <h2 class="title sm">ENCUENTRA EL CÓDIGO QUE NECESITAS</h2>
+        <ul class="bul">
+          <li>La <b>barra “Buscar…”</b> de arriba busca en títulos y textos de las publicaciones.</li>
+          <li>En el inicio, el panel <b>LENGUAJES</b> filtra por Python, JavaScript, SQL, etc., y <b>ETIQUETAS</b> por tema.</li>
+          <li>Ordena por <b>RECIENTES</b> o <b>★ MEJOR VALORADOS</b> para ver primero lo que más ayudó a la comunidad.</li>
+          <li>Se pueden combinar: por ejemplo, “Python” + “Mejor valorados”. Quita los filtros con <b>✕ QUITAR FILTROS</b>.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  {# ---------- publicar ---------- #}
+  <section class="win" id="publicar">
+    {{ winbar('3 · NUEVO_POST.EXE', 'c-pink') }}
+    <div class="body gsec">
+      <img class="mascot" src="{{ img('sentado') }}" alt="Zorro sentado programando en su laptop" width="335" height="302" loading="lazy">
+      <div>
+        <h2 class="title sm">CÓMO HACER UNA PUBLICACIÓN</h2>
+        <ol class="steps">
+          <li>Inicia sesión y pulsa <b>+ POST</b> en el menú.</li>
+          <li>Escribe un <b>título</b> claro y elige el <b>lenguaje</b> principal (así aparece en el filtro del inicio).</li>
+          <li>En la descripción explica qué hace tu código. Acepta <b>Markdown</b>: <code>**negrita**</code>, <code>_cursiva_</code>, listas y enlaces.</li>
+          <li>Añade <b>etiquetas</b> separadas por comas (ej. <code>python, flask, orm</code>).</li>
+          <li>En <b>BLOQUES DE CÓDIGO</b> pega tu snippet y elige su lenguaje. Puedes añadir hasta <b>5 bloques</b> con <b>+ AÑADIR OTRO BLOQUE</b>, cada uno con su título (ej. <code>utils.py</code>).</li>
+          <li>Opcional: adjunta un archivo (imagen, PDF, ZIP o código, máx. 8 MB) y pulsa <b>PUBLICAR ▶</b>.</li>
+        </ol>
+        <p class="help">Puedes editar o borrar tus publicaciones cuando quieras desde su página.</p>
+      </div>
+    </div>
+  </section>
+
+  {# ---------- comentar / valorar ---------- #}
+  <section class="win" id="interactuar">
+    {{ winbar('4 · COMUNIDAD.EXE', 'c-green') }}
+    <div class="body gsec flip">
+      <img class="mascot" src="{{ img('listo') }}" alt="Zorro con el pulgar arriba" width="355" height="336" loading="lazy">
+      <div>
+        <h2 class="title sm">COMENTA, DA ♥ Y VALORA</h2>
+        <ul class="bul">
+          <li><b>Me gusta (♥):</b> un toque para decir “¡buen aporte!”. Pulsa otra vez para quitarlo.</li>
+          <li><b>Estrellas ★:</b> valora de 1 a 5 si el código te sirvió (no puedes valorar el tuyo). Pulsa la misma estrella para quitar tu voto.</li>
+          <li><b>★ RECOMENDADO:</b> los posts con varias valoraciones y buena nota reciben esta insignia.</li>
+          <li><b>Comentarios:</b> abre una publicación y escribe abajo. Sé amable: ¡aquí venimos a aprender!</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  {# ---------- notificaciones ---------- #}
+  <section class="win" id="avisos">
+    {{ winbar('5 · AVISOS.LOG', 'c-yellow') }}
+    <div class="body gsec">
+      <img class="mascot" src="{{ img('noti') }}" alt="Zorro con una campana de notificaciones" width="355" height="326" loading="lazy">
+      <div>
+        <h2 class="title sm">NOTIFICACIONES 🔔</h2>
+        <p>La campana del menú muestra un contador cuando alguien <b>comenta</b>, da <b>me gusta</b>, <b>valora</b> tu publicación o <b>empieza a seguirte</b>. Entra para leerlas: se marcan como vistas solas.</p>
+      </div>
+    </div>
+  </section>
+
+  {# ---------- chat ---------- #}
+  <section class="win" id="chat">
+    {{ winbar('6 · CHAT.EXE', 'c-violet') }}
+    <div class="body gsec flip">
+      <img class="mascot" src="{{ img('comentarios') }}" alt="Zorro con globos de chat" width="378" height="337" loading="lazy">
+      <div>
+        <h2 class="title sm">CHAT EN VIVO Y BLOQUES DE CÓDIGO</h2>
+        <ul class="bul">
+          <li>Entra en <b>CHAT</b>. Busca a alguien por su nombre y pulsa <b>ESCRIBIR</b> para un mensaje directo, o únete a un <b>grupo</b> (también puedes <b>+ CREAR</b> el tuyo).</li>
+          <li>Los mensajes llegan al instante. <b>Enter</b> envía; <b>Shift + Enter</b> baja de línea.</li>
+          <li>Un punto rosa junto a una conversación indica mensajes sin leer.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="body" style="padding-top:0">
+      <h3 class="title sm" style="margin-top:.2rem">¿CÓMO MANDO CÓDIGO POR EL CHAT?</h3>
+      <p>Escribe tres comillas invertidas <code>```</code> seguidas del lenguaje, pega tu código y <b>cierra con otras tres</b>. Todo el mensaje debe ser el bloque. Usa Shift + Enter para las líneas nuevas:</p>
+      {{ code_block('```python\ndef saludar(nombre):\n    return f"Hola, {nombre}!"\n\nprint(saludar("MyPixel"))\n```', 'plaintext', 'LO QUE ESCRIBES') }}
+      <p>Quien lo reciba verá el código con <b>colores</b> y un botón <b>COPIAR</b>, igual que en las publicaciones. Lenguajes comunes: <code>python</code>, <code>javascript</code>, <code>java</code>, <code>sql</code>, <code>html</code>, <code>bash</code>, <code>php</code>, <code>go</code>… Si no pones lenguaje, se muestra como texto plano.</p>
+      <p class="help">Tip: si tu mensaje lleva texto <i>y</i> código, mándalos en dos mensajes seguidos.</p>
+    </div>
+  </section>
+
+  {# ---------- apoyar ---------- #}
+  <section class="win support" id="apoyar">
+    {{ winbar('7 · APOYAR_AL_DEV.EXE', 'c-pink') }}
+    <div class="body gsec">
+      <img class="mascot" src="{{ img('apoyo') }}" alt="Zorro abrazando un corazón" width="309" height="340" loading="lazy">
+      <div>
+        <h2 class="title sm">APOYA AL DESARROLLADOR ♥</h2>
+        <p>MyPixel lo hago yo, con mucho cariño y píxeles, y es <b>gratis</b> para todos. Si te sirve y quieres ayudarme  y a seguir mejorándolo, puedes dejarme un aporte voluntario por <b>PayPal</b>. ¡Cualquier cantidad se agradece muchísimo!</p>
+        <div class="row">
+          {% if paypal_url %}
+            <a class="btn pink" href="{{ paypal_url }}" target="_blank" rel="noopener noreferrer">♥ APOYAR CON PAYPAL</a>
+            <small class="muted">paypal.me/{{ paypal_user }}</small>
+          {% else %}
+            <span class="btn pink" aria-disabled="true" style="opacity:.6;cursor:not-allowed">♥ APOYAR CON PAYPAL · PRÓXIMAMENTE</span>
+          {% endif %}
+        </div>
+        <p class="help">Se abre PayPal en otra pestaña. Es 100% opcional: compartir código y usar la web seguirá siendo gratis. ¡Gracias por estar aquí!</p>
+      </div>
+    </div>
+  </section>
+
+  {# ---------- dudas ---------- #}
+  <section class="win" id="dudas">
+    {{ winbar('8 · DUDAS.TXT', 'c-cyan') }}
+    <div class="body gsec flip">
+      <img class="mascot" src="{{ img('dudas') }}" alt="Zorro con un signo de pregunta" width="321" height="340" loading="lazy">
+      <div>
+        <h2 class="title sm">PREGUNTAS RÁPIDAS</h2>
+        <dl class="faq">
+          <dt>¿Tengo que registrarme para ver el código?</dt>
+          <dd>No. Cualquiera puede leer y copiar. Para publicar, comentar, valorar o chatear sí necesitas cuenta.</dd>
+          <dt>¿Puedo cambiar a modo oscuro?</dt>
+          <dd>Sí, con el botón <b>◐</b> del menú. Se acuerda de tu elección.</dd>
+          <dt>¿Funciona en el celular?</dt>
+          <dd>Sí. En pantallas pequeñas el menú se abre con el botón <b>☰ MENÚ</b>.</dd>
+          <dt>No veo mis mensajes del chat al instante</dt>
+          <dd>Mira el estado arriba de la sala: si dice “conectando”, espera unos segundos o recarga la página.</dd>
+        </dl>
+      </div>
+    </div>
+  </section>
+
+  {# ---------- soporte ---------- #}
+  <section class="win" id="soporte">
+    {{ winbar('SOPORTE.EXE', 'c-yellow') }}
+    <div class="body gsec">
+      <img class="mascot" src="{{ img('soporte') }}" alt="Zorro arreglando una computadora" width="393" height="304" loading="lazy">
+      <div>
+        <h2 class="title sm">¿ALGO NO FUNCIONA?</h2>
+        <p>Recarga la página y prueba de nuevo. Si el problema sigue, cuéntaselo al administrador por el <a href="{{ url_for('chat.index') }}" style="color:var(--pink)">chat</a> con una captura y lo que estabas haciendo, y lo arreglamos.</p>
+        <div class="row"><a class="btn cyan" href="{{ url_for('posts.feed') }}">◀ VOLVER AL INICIO</a></div>
+      </div>
+    </div>
+  </section>
+</div>
+{% endblock %}

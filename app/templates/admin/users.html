@@ -1,0 +1,48 @@
+{% extends "admin/_layout.html" %}
+{% from "_macros.html" import avatar, winbar, pager %}
+{% block title %}Usuarios · Admin{% endblock %}
+{% block admin_content %}
+<h1 class="title">USUARIOS</h1>
+<form method="get" class="row" style="margin:0 0 1rem;flex-wrap:nowrap">
+  <label for="uq" class="sr-only">Buscar usuario</label>
+  <input id="uq" type="search" name="q" value="{{ q }}" placeholder="Buscar por nombre o correo">
+  <button class="btn">BUSCAR</button>
+</form>
+
+<div class="win">
+  {{ winbar('USERS.DB', 'c-yellow') }}
+  <div class="tblwrap">
+    <table class="tbl">
+      <thead><tr><th>USUARIO</th><th>CORREO</th><th>ESTADO</th><th>ACCIONES</th></tr></thead>
+      <tbody>
+        {% for u in users %}
+          <tr>
+            <td><a href="{{ url_for('profile.view', username=u.username) }}" style="display:flex;gap:.5rem;align-items:center;text-decoration:none">{{ avatar(u, 28) }} @{{ u.username }}</a></td>
+            <td>{{ u.email }}</td>
+            <td>
+              {% if u.is_admin %}<span class="pill gold">ADMIN</span>{% endif %}
+              {% if u.is_banned %}<span class="pill" style="background:var(--pink);color:var(--cream)">SUSPENDIDO</span>{% endif %}
+              {% if not u.is_admin and not u.is_banned %}<span class="muted">Activo</span>{% endif %}
+            </td>
+            <td>
+              {% if not u.is_admin %}
+                <form method="post" action="{{ url_for('admin.toggle_ban', user_id=u.id) }}" data-confirm="{{ 'Reactivar' if u.is_banned else '¿Suspender' }} a {{ u.username }}?">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button class="btn sm {{ 'green' if u.is_banned else 'pink' }}">{{ 'REACTIVAR' if u.is_banned else 'SUSPENDER' }}</button>
+                </form>
+              {% endif %}
+              {% if u.id != current_user.id %}
+                <form method="post" action="{{ url_for('admin.toggle_admin', user_id=u.id) }}" data-confirm="¿{{ 'Quitar admin a' if u.is_admin else 'Hacer admin a' }} {{ u.username }}?">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button class="btn sm ghost">{{ 'QUITAR ADMIN' if u.is_admin else 'HACER ADMIN' }}</button>
+                </form>
+              {% endif %}
+            </td>
+          </tr>
+        {% else %}<tr><td colspan="4" class="muted" style="text-align:center">Sin resultados.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{{ pager(pagination, 'admin.users', {'q': q or none}) }}
+{% endblock %}

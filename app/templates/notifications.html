@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% from "_macros.html" import avatar, winbar, pager %}
+{% block title %}Notificaciones{% endblock %}
+{% block content %}
+<div style="max-width:720px;margin:0 auto">
+  <div class="win">
+    {{ winbar('NOTIFICACIONES.LOG', 'c-yellow') }}
+    <div style="padding:0">
+      {% for n in notifications %}
+        <div class="notif {{ 'unread' if not n.read_at }}">
+          <a class="av-link" href="{{ url_for('profile.view', username=n.actor.username) }}">{{ avatar(n.actor, 36) }}</a>
+          <div style="min-width:0;flex:1">
+            <p>
+              <a class="who" style="font-family:var(--px);font-size:.6rem;text-decoration:none" href="{{ url_for('profile.view', username=n.actor.username) }}">@{{ n.actor.username }}</a>
+              {% if n.kind == 'comment' %}comentó en tu publicación
+              {% elif n.kind == 'like' %}le dio me gusta a tu publicación
+              {% elif n.kind == 'rating' %}valoró tu publicación
+              {% elif n.kind == 'follow' %}empezó a seguirte
+              {% endif %}
+              {% if n.post %}<a class="t" href="{{ url_for('posts.detail', post_id=n.post.id) }}">{{ n.post.title }}</a>{% endif %}
+            </p>
+            <small class="muted">{{ n.created_at|timeago }}</small>
+          </div>
+        </div>
+      {% else %}
+        <div class="empty"><img class="mascot sm" src="{{ url_for('static', filename='img/noti.png') }}" alt="" width="130" height="119" loading="lazy"><br>SIN NOTIFICACIONES<br><small style="font-family:var(--body);font-size:1.2rem">Cuando alguien comente, valore o te siga, aparecerá aquí.</small></div>
+      {% endfor %}
+    </div>
+  </div>
+  {{ pager(pagination, 'main.notifications', {}) }}
+</div>
+{% endblock %}

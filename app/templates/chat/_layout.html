@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% from "_macros.html" import avatar, winbar %}
+{% block content %}
+<div class="chat-layout">
+  <aside class="chat-sidebar" aria-label="Conversaciones">
+    <div class="win">
+      {{ winbar('CONVERSACIONES', 'c-cyan') }}
+      <div class="body" style="padding:.7rem">
+        <a href="{{ url_for('chat.index') }}" class="btn sm block cyan">🔎 BUSCAR PERSONAS Y GRUPOS</a>
+
+        <div class="subh"><span>GRUPOS</span><a href="{{ url_for('chat.new_group') }}">+ CREAR</a></div>
+        <ul class="menu" id="sidebar-groups">
+          {% for g in my_groups %}
+            <li><a href="{{ url_for('chat.group', group_id=g.id) }}" data-conv="group_{{ g.id }}"
+                   class="conv-link {{ 'active' if active_key == 'group_' ~ g.id }} {{ 'has-unread' if g.has_unread }}">
+              <span class="nm"># {{ g.name }}</span><span class="badge {{ '' if g.has_unread else 'hidden' }}"></span></a></li>
+          {% else %}<li class="help" style="padding:.2rem .5rem">Aún no estás en ningún grupo.</li>{% endfor %}
+        </ul>
+
+        <div class="subh"><span>MENSAJES DIRECTOS</span></div>
+        <ul class="menu" id="sidebar-dms">
+          {% for u in partners %}
+            <li><a href="{{ url_for('chat.direct', username=u.username) }}" data-conv="dm_{{ u.id }}"
+                   class="conv-link {{ 'active' if active_key == 'dm_' ~ u.id }} {{ 'has-unread' if u.has_unread }}">
+              <span class="nm">{{ avatar(u, 22) }}{{ u.username }}</span><span class="badge {{ '' if u.has_unread else 'hidden' }}"></span></a></li>
+          {% else %}<li class="help" style="padding:.2rem .5rem">Sin conversaciones todavía.</li>{% endfor %}
+        </ul>
+      </div>
+    </div>
+  </aside>
+
+  <section>{% block chat_content %}{% endblock %}</section>
+</div>
+{% endblock %}
+
+{% block scripts %}
+  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js" crossorigin="anonymous"></script>
+  <script>window.CHAT = { activeKey: {{ (active_key or '')|tojson }}, kind: {{ (kind or '')|tojson }}, targetId: {{ (target_id or 0)|tojson }}, me: {{ current_user.id|tojson }} };</script>
+  <script src="{{ url_for('static', filename='js/chat.js') }}"></script>
+{% endblock %}

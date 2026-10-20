@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field, winbar %}
+{% block title %}Iniciar sesión{% endblock %}
+{% block content %}
+<div class="auth">
+  <img class="auth-mascot" src="{{ url_for('static', filename='img/' ~ ('saludando' if True else 'perfil') ~ '.png') }}" alt="" width="120" height="114">
+  <a class="logo" href="{{ url_for('posts.feed') }}"><img class="logo-ico" src="{{ url_for('static', filename='img/icono1.png') }}" alt="" width="48" height="41">MY<i>_</i>PIXEL</a>
+  <div class="tabs"><a href="{{ url_for('auth.login') }}" class="on">LOGIN</a><a href="{{ url_for('auth.register') }}">REGISTRO</a></div>
+  <div class="win">
+    {{ winbar('LOGIN.EXE', 'c-cyan') }}
+    <form class="body" method="post" novalidate>
+      {{ form.hidden_tag() }}
+      {{ field(form.email) }}
+      {{ field(form.password) }}
+      <label class="inline" style="font-family:var(--body);font-size:1.2rem">{{ form.remember() }} {{ form.remember.label.text }}</label>
+      <div class="row"><button class="btn pink block">ENTRAR ▶</button></div>
+    </form>
+  </div>
+  <div class="marq"><span>★ BIENVENIDO A MYPIXEL ★ COMPARTE CÓDIGO ★ VALORA ★ COMENTA ★ CHATEA EN VIVO ★ INSERT COIN TO CONTINUE ★</span></div>
+</div>
+{% endblock %}

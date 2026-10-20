@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% from "_macros.html" import winbar %}
+{% block title %}Error {{ code }}{% endblock %}
+{% block content %}
+<div class="errpage win">
+  {{ winbar('ERROR_' ~ code ~ '.EXE', 'c-violet') }}
+  <div class="body">
+    <img class="mascot sm" src="{{ url_for('static', filename='img/' ~ ('dudas' if code == 404 else 'soporte') ~ '.png') }}" alt="" width="140" height="130">
+    <p class="code">{{ code }}</p>
+    <p>{{ message }}</p>
+    <div class="row" style="justify-content:center"><a href="{{ url_for('posts.feed') }}" class="btn pink">◀ VOLVER AL INICIO</a></div>
+  </div>
+</div>
+{% endblock %}

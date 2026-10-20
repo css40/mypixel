@@ -1,0 +1,62 @@
+{% extends "chat/_layout.html" %}
+{% from "_macros.html" import avatar, code_block %}
+{% block title %}{{ title }}{% endblock %}
+{% block chat_content %}
+<div class="win chat-room">
+  <div class="bar c-green">
+    <div class="dots"><span></span><span></span><span></span></div>
+    {% if kind == 'dm' %}
+      <b>DM_{{ other.username|upper }}.CHAT</b>
+    {% else %}
+      <b># {{ group.name|upper }}.CHAT</b>
+      <span class="tools">
+        {% if group.owner_id == current_user.id %}
+          <form method="post" action="{{ url_for('chat.delete_group', group_id=group.id) }}" data-confirm="¿Eliminar el grupo y todos sus mensajes?">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="btn sm pink">ELIMINAR</button>
+          </form>
+        {% else %}
+          <form method="post" action="{{ url_for('chat.leave_group', group_id=group.id) }}" data-confirm="¿Salir del grupo?">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="btn sm">SALIR</button>
+          </form>
+        {% endif %}
+      </span>
+    {% endif %}
+    <span id="conn-status" role="status">CONECTANDO…</span>
+  </div>
+  <div class="body">
+    <div style="padding:.4rem .8rem;border-bottom:2px solid var(--line);background:var(--win);display:flex;gap:.6rem;align-items:center;min-width:0">
+      {% if kind == 'dm' %}
+        {{ avatar(other, 28) }}<a class="who" style="font-family:var(--px);font-size:.6rem;text-decoration:none" href="{{ url_for('profile.view', username=other.username) }}">@{{ other.username }}</a>
+      {% else %}
+        <small class="muted" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ group.description or 'Sin descripción' }} · {{ group.member_count }} miembros</small>
+      {% endif %}
+    </div>
+
+    <ol id="messages" aria-live="polite">
+      {% for m in messages %}
+        <li class="msg {{ 'me' if m.sender_id == current_user.id }}" data-id="{{ m.id }}">
+          {{ avatar(m.sender, 30) }}
+          <div class="col">
+            <div class="meta">{{ m.sender.username }}<time data-ts="{{ m.created_at.isoformat() }}Z"></time></div>
+            {% if m.is_code %}
+              <div class="chat-code">{{ code_block(m.body, m.code_language or 'plaintext') }}</div>
+            {% else %}
+              <div class="bb">{{ m.body }}</div>
+            {% endif %}
+          </div>
+        </li>
+      {% endfor %}
+    </ol>
+    <p id="typing-indicator" class="hidden" aria-live="polite"></p>
+
+    <form id="chat-form">
+      <label for="chat-input" class="sr-only">Mensaje</label>
+      <textarea id="chat-input" rows="1" maxlength="2000"
+                placeholder="Escribe un mensaje… (usa ``` para pegar código)"></textarea>
+      <button class="btn pink">ENVIAR ▶</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

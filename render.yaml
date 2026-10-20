@@ -1,0 +1,33 @@
+# Blueprint de Render: crea la base de datos PostgreSQL y el servicio web juntos.
+# Render > New > Blueprint > elige tu repositorio.
+databases:
+  - name: mypixel-db
+    databaseName: mypixel
+    user: mypixel
+    plan: free            # revisa en Render las condiciones vigentes del plan gratuito
+
+services:
+  - type: web
+    name: mypixel
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    # 1 worker + hilos: Flask-SocketIO (modo threading) necesita que todos los
+    # clientes del chat lleguen al mismo proceso.
+    startCommand: gunicorn --worker-class gthread --threads 100 --workers 1 --bind 0.0.0.0:$PORT run:app
+    healthCheckPath: /auth/login
+    envVars:
+      - key: DATABASE_URL            # la rellena Render con la URL *interna* de la base
+        fromDatabase:
+          name: mypixel-db
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
+      - key: ADMIN_USERNAME
+        value: admin
+      - key: ADMIN_EMAIL
+        value: admin@mypixel.com
+      - key: PAYPAL_USERNAME         # tu usuario de PayPal.Me (botón «Apoyar» de la página Acerca de)
+        value: TU_USUARIO_PAYPAL
+      - key: ADMIN_PASSWORD
+        sync: false                  # Render te la pide al crear el servicio (no se guarda en el repo)

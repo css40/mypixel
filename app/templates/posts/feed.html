@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% from "_macros.html" import winbar %}
+{% block title %}{{ active_lang or 'Inicio' }}{% endblock %}
+{% block content %}
+<div class="layout">
+  <section aria-label="Publicaciones">
+    <h1 class="title">
+      {% if q %}RESULTADOS: “{{ q }}”{% elif following_only %}SIGUIENDO{% elif active_lang %}{{ active_lang|upper }}{% else %}LO ÚLTIMO DE LA COMUNIDAD{% endif %}
+    </h1>
+
+    <div class="sorts" role="tablist" aria-label="Ordenar publicaciones">
+      <a href="{{ url_for('posts.feed', lang=active_lang or none, tag=active_tag or none, q=q or none) }}" role="tab" aria-selected="{{ 'true' if sort == 'recent' }}" class="{{ 'on' if sort == 'recent' and not following_only }}">RECIENTES</a>
+      <a href="{{ url_for('posts.feed', lang=active_lang or none, tag=active_tag or none, q=q or none, sort='top') }}" role="tab" aria-selected="{{ 'true' if sort == 'top' }}" class="{{ 'on' if sort == 'top' }}">★ MEJOR VALORADOS</a>
+      {% if current_user.is_authenticated %}
+        <a href="{{ url_for('posts.feed', following=1) }}" role="tab" aria-selected="{{ 'true' if following_only }}" class="{{ 'on' if following_only }}">SIGUIENDO</a>
+      {% endif %}
+      {% if active_lang or q or active_tag or following_only %}<a class="right" href="{{ url_for('posts.feed') }}">✕ QUITAR FILTROS</a>{% endif %}
+    </div>
+    {% if active_tag %}
+      <p class="help" style="margin:-.5rem 0 1rem">Etiqueta: <b>#{{ active_tag }}</b> · <a href="{{ url_for('posts.feed', lang=active_lang or none, q=q or none, sort=sort if sort != 'recent' else none) }}">quitar</a></p>
+    {% endif %}
+
+    {% for post in posts %}
+      {% set liked = post.id in liked_ids %}
+      {% include "posts/_card.html" with context %}
+    {% else %}
+      <div class="win"><div class="empty"><img class="mascot sm" src="{{ url_for('static', filename=('img/buscar.png' if (active_lang or q or active_tag or following_only) else 'img/sentado.png')) }}" alt="" width="130" height="120" loading="lazy"><br>NO HAY POSTS {% if active_lang or q or active_tag or following_only %}CON ESTE FILTRO{% else %}TODAVÍA{% endif %}<br>
+        <a href="{{ url_for('posts.create') }}">¡SÉ EL PLAYER 1!</a></div></div>
+    {% endfor %}
+
+    {% set kwargs = {'lang': active_lang or none, 'tag': active_tag or none, 'q': q or none, 'sort': sort if sort != 'recent' else none, 'following': 1 if following_only else none} %}
+    {% set endpoint = 'posts.feed' %}
+    {% include "posts/_pagination.html" with context %}
+  </section>
+
+  <aside class="side" aria-label="Filtros">
+    <div class="win">
+      {{ winbar('LENGUAJES', 'c-cyan') }}
+      <div class="body" style="padding:.6rem">
+        <ul class="menu">
+          <li><a href="{{ url_for('posts.feed', q=q or None, sort=sort if sort != 'recent' else None) }}" class="{{ 'on' if not active_lang }}">Todos</a></li>
+          {% for name, _alias in LANGUAGES %}
+            <li><a href="{{ url_for('posts.feed', lang=name, q=q or None, sort=sort if sort != 'recent' else None) }}" class="{{ 'on' if active_lang == name }}">{{ name }}<span>{{ lang_counts.get(name, 0) }}</span></a></li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+
+    {% if popular_tags %}
+      <div class="win">
+        {{ winbar('ETIQUETAS', 'c-yellow') }}
+        <div class="body" style="padding:.7rem">
+          <ul class="tagcloud">
+            {% for t, n in popular_tags %}
+              <li><a href="{{ url_for('posts.feed', tag=t.slug) }}" class="{{ 'on' if active_tag == t.slug }}">#{{ t.name }} {{ n }}</a></li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    {% endif %}
+  </aside>
+</div>
+{% endblock %}

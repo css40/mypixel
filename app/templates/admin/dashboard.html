@@ -1,0 +1,35 @@
+{% extends "admin/_layout.html" %}
+{% from "_macros.html" import winbar %}
+{% block title %}Panel de administración{% endblock %}
+{% block admin_content %}
+<h1 class="title">PANEL DE ADMINISTRACIÓN</h1>
+
+<div class="statgrid">
+  {% for label, value in [('USUARIOS', stats.users), ('POSTS', stats.posts), ('COMENTS', stats.comments), ('GRUPOS', stats.groups), ('SUSPENDIDOS', stats.banned)] %}
+    <div><b>{{ value }}</b><small>{{ label }}</small></div>
+  {% endfor %}
+</div>
+
+<div class="two">
+  <div class="win">
+    {{ winbar('ÚLTIMOS_POSTS.LOG', 'c-cyan') }}
+    <div class="body">
+      <ul class="list">
+        {% for p in latest_posts %}
+          <li><a href="{{ url_for('posts.detail', post_id=p.id) }}">{{ p.title }}</a><small class="muted">@{{ p.author.username }}</small></li>
+        {% else %}<li class="muted">Sin posts.</li>{% endfor %}
+      </ul>
+    </div>
+  </div>
+  <div class="win">
+    {{ winbar('ÚLTIMOS_USUARIOS.LOG', 'c-yellow') }}
+    <div class="body">
+      <ul class="list">
+        {% for u in latest_users %}
+          <li><a href="{{ url_for('profile.view', username=u.username) }}">@{{ u.username }}</a><small class="muted" style="overflow:hidden;text-overflow:ellipsis">{{ u.email }}</small></li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+</div>
+{% endblock %}

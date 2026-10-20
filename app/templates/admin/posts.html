@@ -1,0 +1,32 @@
+{% extends "admin/_layout.html" %}
+{% from "_macros.html" import winbar, pager %}
+{% block title %}Publicaciones · Admin{% endblock %}
+{% block admin_content %}
+<h1 class="title">PUBLICACIONES</h1>
+<div class="win">
+  {{ winbar('POSTS.DB', 'c-cyan') }}
+  <div class="tblwrap">
+    <table class="tbl">
+      <thead><tr><th>TÍTULO</th><th>AUTOR</th><th>LENGUAJE</th><th>VALORACIÓN</th><th></th></tr></thead>
+      <tbody>
+        {% for p in posts %}
+          {% set rs = p.rating_stats() %}
+          <tr>
+            <td class="trunc"><a href="{{ url_for('posts.detail', post_id=p.id) }}">{{ p.title }}</a></td>
+            <td>@{{ p.author.username }}</td>
+            <td>{{ p.language }}</td>
+            <td>{{ rs[1] }} ({{ rs[0] }})</td>
+            <td style="text-align:right">
+              <form method="post" action="{{ url_for('admin.delete_post', post_id=p.id) }}" data-confirm="¿Eliminar «{{ p.title }}» por moderación?">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button class="btn sm pink">✕ ELIMINAR</button>
+              </form>
+            </td>
+          </tr>
+        {% else %}<tr><td colspan="5" class="muted" style="text-align:center">No hay publicaciones.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{{ pager(pagination, 'admin.posts', {}) }}
+{% endblock %}

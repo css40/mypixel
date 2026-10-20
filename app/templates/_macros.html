@@ -1,0 +1,84 @@
+{# Avatar: imagen propia si la subió; si no, avatar retro (emoji + color) #}
+{% macro avatar(user, size=40) %}{% if user.avatar_url %}<img class="av" src="{{ user.avatar_url }}" alt="" width="{{ size }}" height="{{ size }}" style="--s:{{ size }}px" loading="lazy">{% else %}<span class="av" style="--s:{{ size }}px;--bg:{{ user.display_color }}" aria-hidden="true">{{ user.display_emoji }}</span>{% endif %}{% endmacro %}
+
+{# Barra de título de ventana retro #}
+{% macro winbar(title, color='') %}<div class="bar {{ color }}"><div class="dots"><span></span><span></span><span></span></div><b>{{ title }}</b>{{ caller() if caller }}</div>{% endmacro %}
+
+{# Bloque de código con resaltado y botón "Copiar" #}
+{% macro code_block(code, hljs_lang, label='') %}
+  <figure class="code-block">
+    <figcaption><span>{{ label or hljs_lang }}</span>
+      <button type="button" class="copy-btn" aria-label="Copiar código al portapapeles">COPIAR</button>
+    </figcaption>
+    <pre><code class="language-{{ hljs_lang }}">{{ code }}</code></pre>
+  </figure>
+{% endmacro %}
+
+{# Campo de formulario WTForms con etiqueta y errores #}
+{% macro field(f, rows=None, help=None) %}
+  <div>
+    <label for="{{ f.id }}">{{ f.label.text }}</label>
+    {% if rows %}{{ f(rows=rows) }}{% else %}{{ f() }}{% endif %}
+    {% if help %}<p class="help">{{ help }}</p>{% endif %}
+    {% for e in f.errors %}<p class="err">⚠ {{ e }}</p>{% endfor %}
+  </div>
+{% endmacro %}
+
+{# Etiqueta de lenguaje #}
+{% macro lang_tag(name) %}<a class="pill" href="{{ url_for('posts.feed', lang=name) }}">{{ name }}</a>{% endmacro %}
+
+{# Estrellas de solo lectura (media 0-5) #}
+{% macro stars_static(avg, size=14) %}
+  <span class="stars-inline" role="img" aria-label="{{ avg }} de 5 estrellas">
+    {% for i in range(1, 6) %}<svg class="star {{ 'is-on' if i <= (avg + 0.25)|round(0, 'floor') else '' }}" width="{{ size }}" height="{{ size }}" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6L2.5 9.4l6.6-.8L12 2.5z"/></svg>{% endfor %}
+  </span>
+{% endmacro %}
+
+{# Resumen de valoración para tarjetas: estrellas + media + nº de votos + insignia #}
+{% macro rating_summary(post) %}
+  {% set rs = post.rating_stats() %}
+  <span>{{ stars_static(rs[1]) }}
+    {% if rs[0] %} <b>{{ rs[1] }}</b> <span class="muted">({{ rs[0] }})</span>{% else %} <span class="muted">Sin valoraciones</span>{% endif %}
+  </span>
+  {% if post.is_featured(rs) %}<span class="pill gold">★ RECOMENDADO</span>{% endif %}
+{% endmacro %}
+
+{# Selector interactivo de estrellas (detalle del post) #}
+{% macro rating_widget(post, my_rating) %}
+  {% set rs = post.rating_stats() %}
+  <div class="rating-widget ratebox" data-url="{{ url_for('posts.rate', post_id=post.id) }}"
+       {% if not current_user.is_authenticated %}data-login="{{ url_for('auth.login', next=request.path) }}"{% endif %}
+       {% if current_user.is_authenticated and current_user.id == post.user_id %}data-own="1"{% endif %}>
+    <div class="line">
+      <div class="rate-stars" role="group" aria-label="Valorar este código de 1 a 5 estrellas">
+        {% for i in [5, 4, 3, 2, 1] %}
+          <button type="button" class="rate-btn {{ 'is-on' if my_rating and i <= my_rating }}" data-score="{{ i }}"
+                  aria-label="{{ i }} {{ 'estrella' if i == 1 else 'estrellas' }}" aria-pressed="{{ 'true' if my_rating == i else 'false' }}">
+            <svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6L2.5 9.4l6.6-.8L12 2.5z"/></svg>
+          </button>
+        {% endfor %}
+      </div>
+      <span class="rating-text">
+        {% if rs[0] %}<b>{{ rs[1] }}</b> · {{ rs[0] }} valoración{{ 'es' if rs[0] != 1 }}{% else %}Sin valoraciones todavía{% endif %}
+      </span>
+      <span class="featured-badge pill gold {{ '' if post.is_featured(rs) else 'hidden' }}">★ RECOMENDADO</span>
+    </div>
+    <p class="rating-hint help">
+      {% if not current_user.is_authenticated %}Inicia sesión para valorar.
+      {% elif current_user.id == post.user_id %}No puedes valorar tu propio código.
+      {% elif my_rating %}Tu valoración: {{ my_rating }}★ (pulsa la misma estrella para quitarla).
+      {% else %}¿Te sirvió? Valóralo: los mejores códigos suben en “Mejor valorados”.{% endif %}
+    </p>
+  </div>
+{% endmacro %}
+
+{# Paginación. Espera: pagination, endpoint, kwargs #}
+{% macro pager(pagination, endpoint, kwargs) %}
+{% if pagination.pages > 1 %}
+<nav class="pager" aria-label="Paginación">
+  {% if pagination.has_prev %}<a class="btn sm" href="{{ url_for(endpoint, page=pagination.prev_num, **kwargs) }}">◀ ANTERIOR</a>{% else %}<span></span>{% endif %}
+  <span>PÁG {{ pagination.page }}/{{ pagination.pages }}</span>
+  {% if pagination.has_next %}<a class="btn sm" href="{{ url_for(endpoint, page=pagination.next_num, **kwargs) }}">SIGUIENTE ▶</a>{% else %}<span></span>{% endif %}
+</nav>
+{% endif %}
+{% endmacro %}

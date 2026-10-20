@@ -1,0 +1,46 @@
+{% extends "chat/_layout.html" %}
+{% from "_macros.html" import avatar, winbar %}
+{% block title %}Chat{% endblock %}
+{% block chat_content %}
+<div class="win">
+  {{ winbar('CHAT.EXE', 'c-green') }}
+  <div class="body">
+    <div class="chat-hello"><img class="mascot sm" src="{{ url_for('static', filename='img/comentarios.png') }}" alt="" width="130" height="116" loading="lazy">
+      <p>¡Busca a alguien o únete a un grupo! ¿Quieres mandar código? Escríbelo entre <code>```</code>. <a href="{{ url_for('main.about') }}#chat" style="color:var(--pink)">Ver cómo</a>.</p></div>
+    <form method="get" class="row" style="margin-top:0;flex-wrap:nowrap">
+      <label for="chat-q" class="sr-only">Buscar usuario</label>
+      <input id="chat-q" type="search" name="q" value="{{ q }}" placeholder="Buscar un jugador por nombre">
+      <button class="btn">BUSCAR</button>
+    </form>
+
+    {% if q %}
+      <ul class="list" style="margin-top:1rem">
+        {% for u in found_users %}
+          <li>
+            <a href="{{ url_for('profile.view', username=u.username) }}" style="display:flex;gap:.6rem;align-items:center">{{ avatar(u, 28) }} @{{ u.username }}</a>
+            <a href="{{ url_for('chat.direct', username=u.username) }}" class="btn sm cyan">ESCRIBIR</a>
+          </li>
+        {% else %}<li class="muted">Nadie coincide con “{{ q }}”.</li>{% endfor %}
+      </ul>
+    {% endif %}
+
+    <h2 class="title sm" style="margin-top:1.6rem">GRUPOS PARA UNIRTE</h2>
+    <ul class="list">
+      {% for g in other_groups %}
+        <li>
+          <div style="min-width:0">
+            <b style="font-weight:normal;font-family:var(--px);font-size:.6rem"># {{ g.name }}</b><br>
+            <small class="muted">{{ g.description or 'Sin descripción' }} · {{ g.member_count }} miembros</small>
+          </div>
+          <form method="post" action="{{ url_for('chat.join_group', group_id=g.id) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="btn sm">UNIRME</button>
+          </form>
+        </li>
+      {% else %}
+        <li class="muted">No hay más grupos. <a style="color:var(--pink)" href="{{ url_for('chat.new_group') }}">Crea el primero.</a></li>
+      {% endfor %}
+    </ul>
+  </div>
+</div>
+{% endblock %}

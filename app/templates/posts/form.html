@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field, winbar %}
+{% block title %}{{ 'Editar publicación' if editing else 'Nueva publicación' }}{% endblock %}
+{% block content %}
+<div style="max-width:820px;margin:0 auto">
+<div class="win">
+  {{ winbar('EDITAR_POST.EXE' if editing else 'NUEVO_POST.EXE', 'c-yellow') }}
+  <form method="post" enctype="multipart/form-data" class="body" novalidate>
+    {{ form.hidden_tag() }}
+    {{ field(form.title) }}
+    {{ field(form.language, help="Categoría principal con la que aparece en el feed.") }}
+    {{ field(form.body, rows=6, help="Admite Markdown: **negrita**, _cursiva_, listas, enlaces, etc.") }}
+    {{ field(form.tags, help="Sepáralas con comas, ej: python, flask, orm") }}
+
+    {# ---- Bloques de código dinámicos (1 a 5) ---- #}
+    <fieldset>
+      <legend>BLOQUES DE CÓDIGO (opcional, hasta 5)</legend>
+      <div id="code-blocks">
+        {% for sub in form.code_blocks %}
+          <div class="code-block-row win" style="box-shadow:3px 3px 0 var(--shadow);margin-bottom:1rem" data-index="{{ loop.index0 }}">
+            <div class="bar c-violet"><b>BLOQUE {{ loop.index }}</b>
+              <button type="button" class="btn sm pink remove-block {{ 'hidden' if loop.first and form.code_blocks|length == 1 }}">✕ QUITAR</button></div>
+            <div class="body">
+              <div class="grid2">
+                {{ sub.form.label(placeholder="Título opcional, ej. utils.py") }}
+                {{ sub.form.language() }}
+              </div>
+              {{ sub.form.code(rows=8, placeholder="Pega tu snippet aquí", class="code-textarea", style="margin-top:.6rem") }}
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+      <button type="button" id="add-block" class="btn sm ghost">+ AÑADIR OTRO BLOQUE</button>
+      <p class="help">Dejar un bloque vacío no pasa nada: se ignora al guardar.</p>
+    </fieldset>
+
+    {# Plantilla oculta que el JS clona para añadir bloques nuevos #}
+    <template id="code-block-template">
+      <div class="code-block-row win" style="box-shadow:3px 3px 0 var(--shadow);margin-bottom:1rem">
+        <div class="bar c-violet"><b>NUEVO BLOQUE</b>
+          <button type="button" class="btn sm pink remove-block">✕ QUITAR</button></div>
+        <div class="body">
+          <div class="grid2">
+            <input type="text" name="code_blocks-__INDEX__-label" placeholder="Título opcional, ej. utils.py">
+            <select name="code_blocks-__INDEX__-language">
+              {% for name, _alias in LANGUAGES %}<option value="{{ name }}">{{ name }}</option>{% endfor %}
+            </select>
+          </div>
+          <textarea name="code_blocks-__INDEX__-code" rows="8" placeholder="Pega tu snippet aquí" class="code-textarea" style="margin-top:.6rem"></textarea>
+        </div>
+      </div>
+    </template>
+
+    <div>
+      <label for="{{ form.attachment.id }}">{{ form.attachment.label.text|upper }}</label>
+      {{ form.attachment() }}
+      <p class="help">Imágenes, PDF, ZIP o archivos de código. Máx. 8 MB.
+        {% if editing and post.attachment %}Actual: <b>{{ post.attachment_name }}</b> (subir otro lo reemplaza).{% endif %}</p>
+      {% for e in form.attachment.errors %}<p class="err">⚠ {{ e }}</p>{% endfor %}
+    </div>
+
+    <div class="row" style="margin-top:1.4rem">
+      <button class="btn pink">{{ 'GUARDAR CAMBIOS ▶' if editing else 'PUBLICAR ▶' }}</button>
+      <a class="btn ghost" href="{{ url_for('posts.detail', post_id=post.id) if editing else url_for('posts.feed') }}">CANCELAR</a>
+    </div>
+  </form>
+</div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  "use strict";
+  const container = document.getElementById("code-blocks");
+  const template = document.getElementById("code-block-template");
+  const addBtn = document.getElementById("add-block");
+  const MAX_BLOCKS = 5;
+
+  function refreshRemoveButtons() {
+    const rows = container.querySelectorAll(".code-block-row");
+    rows.forEach((row) => {
+      row.querySelector(".remove-block").classList.toggle("hidden", rows.length === 1);
+    });
+    addBtn.classList.toggle("hidden", rows.length >= MAX_BLOCKS);
+  }
+
+  addBtn.addEventListener("click", () => {
+    if (container.querySelectorAll(".code-block-row").length >= MAX_BLOCKS) return;
+    const index = container.querySelectorAll(".code-block-row").length;
+    const html = template.innerHTML.replaceAll("__INDEX__", String(index));
+    const wrapper = document.createElement("div");
+    wrapper.innerHTML = html.trim();
+    container.appendChild(wrapper.firstElementChild);
+    refreshRemoveButtons();
+  });
+
+  container.addEventListener("click", (ev) => {
+    const btn = ev.target.closest(".remove-block");
+    if (!btn) return;
+    btn.closest(".code-block-row").remove();
+    container.querySelectorAll(".code-block-row").forEach((row, i) => {
+      row.querySelectorAll("[name^='code_blocks-']").forEach((input) => {
+        input.name = input.name.replace(/code_blocks-\d+-/, `code_blocks-${i}-`);
+      });
+    });
+    refreshRemoveButtons();
+  });
+
+  refreshRemoveButtons();
+})();
+</script>
+{% endblock %}

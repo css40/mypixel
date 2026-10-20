@@ -31,6 +31,10 @@ def _database_url() -> str:
 class Config:
     SECRET_KEY = os.environ.get("SECRET_KEY", "dev-only-change-me")
     IMGBB_API_KEY = os.environ.get("IMGBB_API_KEY", "")
+    GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID", "")
+    GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET", "")
+    GITHUB_CLIENT_ID = os.environ.get("GITHUB_CLIENT_ID", "")
+    GITHUB_CLIENT_SECRET = os.environ.get("GITHUB_CLIENT_SECRET", "")
 
     # Base de datos (PostgreSQL en producción, SQLite en desarrollo local)
     SQLALCHEMY_DATABASE_URI = _database_url()

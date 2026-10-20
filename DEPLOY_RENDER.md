@@ -36,7 +36,7 @@ Render te pide `ADMIN_PASSWORD`: pon una contraseña propia y larga.
 **A mano:** New → Web Service →
 - Build command: `pip install -r requirements.txt`
 - Start command: `gunicorn --worker-class gthread --threads 100 --workers 1 --bind 0.0.0.0:$PORT run:app`
-- Variables: `DATABASE_URL` (Internal Database URL), `SECRET_KEY` (aleatoria), `ADMIN_EMAIL`, `ADMIN_USERNAME`, `ADMIN_PASSWORD` e `IMGBB_API_KEY`.
+- Variables: `DATABASE_URL` (Internal Database URL), `SECRET_KEY` (aleatoria), `ADMIN_EMAIL`, `ADMIN_USERNAME`, `ADMIN_PASSWORD`, `IMGBB_API_KEY` y las credenciales OAuth que quieras habilitar.
 
 ## Cosas a tener en cuenta
 
@@ -45,3 +45,6 @@ Render te pide `ADMIN_PASSWORD`: pon una contraseña propia y larga.
   siguen guardándose en el disco local, que puede ser efímero en Render.
 - Usa **1 solo worker** de gunicorn (el chat en tiempo real lo necesita con la configuración actual).
 - Cambia `ADMIN_PASSWORD`: el valor por defecto está escrito en el código.
+- Configura `GOOGLE_CLIENT_ID` y `GOOGLE_CLIENT_SECRET` y/o `GITHUB_CLIENT_ID` y `GITHUB_CLIENT_SECRET`.
+  Registra como callback `https://TU-DOMINIO/auth/authorize/google` en Google y
+  `https://TU-DOMINIO/auth/authorize/github` en GitHub. Mantén los secretos fuera del repositorio.

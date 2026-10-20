@@ -368,6 +368,11 @@ h1.ptitle { font-size: 1.05rem !important; }
 .tabs a { flex: 1; text-align: center; font-family: var(--px); font-size: .62rem; padding: .8rem; text-decoration: none; border: 2px solid var(--line); border-bottom: 0; background: var(--paper); }
 .tabs a.on { background: var(--pink); color: var(--cream); }
 .auth .win { margin-bottom: 1rem; }
+.social-login { display: grid; gap: .65rem; padding-top: 0; }
+.social-btn { display: flex; justify-content: center; align-items: center; gap: .65rem; text-decoration: none; }
+.social-btn span { font-family: system-ui, sans-serif; font-size: 1.2rem; font-weight: 700; }
+.social-btn.google { background: var(--field); color: var(--ink); }
+.social-btn.github { background: #24292f; color: #fff; }
 .marq { overflow: hidden; white-space: nowrap; border: 2px solid var(--line); background: var(--top); color: var(--green); font-family: var(--px); font-size: .55rem; padding: .5rem; }
 .marq span { display: inline-block; padding-left: 100%; animation: mq 16s linear infinite; }
 @keyframes mq { to { transform: translateX(-100%); } }

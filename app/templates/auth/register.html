@@ -17,6 +17,14 @@
       <p class="help">Te asignaremos un avatar retro; luego puedes cambiarlo o subir tu propia foto.</p>
       <div class="row"><button class="btn pink block">CREAR CUENTA ▶</button></div>
     </form>
+    <div class="body social-login" aria-label="Registro social">
+      <a class="btn social-btn google" href="{{ url_for('auth.social_login', provider='google') }}">
+        <span aria-hidden="true">G</span> Registrarse con Google
+      </a>
+      <a class="btn social-btn github" href="{{ url_for('auth.social_login', provider='github') }}">
+        <span aria-hidden="true">●</span> Registrarse con GitHub
+      </a>
+    </div>
   </div>
   <div class="marq"><span>★ PLAYER 1 READY ★ ELIGE TU AVATAR ★ PUBLICA TU PRIMER SNIPPET ★ INSERT COIN TO CONTINUE ★</span></div>
 </div>

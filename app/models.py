@@ -54,6 +54,7 @@ class User(UserMixin, db.Model):
     username = db.Column(db.String(30), unique=True, nullable=False, index=True)
     email = db.Column(db.String(120), unique=True, nullable=False, index=True)
     password_hash = db.Column(db.String(256), nullable=False)
+    is_verified = db.Column(db.Boolean, default=False, nullable=False)
 
     bio = db.Column(db.Text, default="", nullable=False)
     avatar = db.Column(db.Text)                   # URL de ImgBB o nombre local antiguo

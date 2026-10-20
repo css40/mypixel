@@ -1,5 +1,6 @@
 """Application factory."""
 import os
+from authlib.integrations.flask_client import OAuth
 from flask import Flask
 
 from config import config_by_name
@@ -28,7 +29,10 @@ def create_app(config_name: str = None) -> Flask:
     db.init_app(app)
     login_manager.init_app(app)
     csrf.init_app(app)
+    oauth = OAuth()
+    oauth.init_app(app)
     socketio.init_app(app, cors_allowed_origins=None)
+    _register_oauth_clients(app, oauth)
 
     # Blueprints
     from .admin import bp as admin_bp
@@ -72,7 +76,11 @@ def _ensure_columns(app: Flask) -> None:
     Sirve igual para SQLite local y PostgreSQL. En una base nueva no hace nada."""
     from sqlalchemy import inspect, text
 
-    wanted = {"users": {"avatar_emoji": "VARCHAR(16)", "avatar_color": "VARCHAR(9)"}}
+    wanted = {"users": {
+        "avatar_emoji": "VARCHAR(16)",
+        "avatar_color": "VARCHAR(9)",
+        "is_verified": "BOOLEAN NOT NULL DEFAULT FALSE",
+    }}
     try:
         insp = inspect(db.engine)
         for table, cols in wanted.items():
@@ -85,6 +93,31 @@ def _ensure_columns(app: Flask) -> None:
     except Exception as exc:  # noqa: BLE001 - nunca impedir el arranque por esto
         db.session.rollback()
         app.logger.error("No se pudieron revisar las columnas: %s", exc)
+
+
+def _register_oauth_clients(app: Flask, oauth: OAuth) -> None:
+    """Registra solo los proveedores con credenciales completas."""
+    providers = {
+        "google": {
+            "client_id": app.config.get("GOOGLE_CLIENT_ID"),
+            "client_secret": app.config.get("GOOGLE_CLIENT_SECRET"),
+            "server_metadata_url": "https://accounts.google.com/.well-known/openid-configuration",
+            "client_kwargs": {"scope": "openid email profile"},
+        },
+        "github": {
+            "client_id": app.config.get("GITHUB_CLIENT_ID"),
+            "client_secret": app.config.get("GITHUB_CLIENT_SECRET"),
+            "authorize_url": "https://github.com/login/oauth/authorize",
+            "access_token_url": "https://github.com/login/oauth/access_token",
+            "api_base_url": "https://api.github.com/",
+            "client_kwargs": {"scope": "read:user user:email"},
+        },
+    }
+    for name, settings in providers.items():
+        if settings["client_id"] and settings["client_secret"]:
+            oauth.register(name=name, **settings)
+        else:
+            app.logger.info("OAuth de %s no configurado; se omitirá.", name)
 
 
 def _ensure_url_columns(app: Flask) -> None:

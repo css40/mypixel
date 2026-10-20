@@ -15,6 +15,14 @@
       <label class="inline" style="font-family:var(--body);font-size:1.2rem">{{ form.remember() }} {{ form.remember.label.text }}</label>
       <div class="row"><button class="btn pink block">ENTRAR ▶</button></div>
     </form>
+    <div class="body social-login" aria-label="Inicio de sesión social">
+      <a class="btn social-btn google" href="{{ url_for('auth.social_login', provider='google', next=request.args.get('next', '')) }}">
+        <span aria-hidden="true">G</span> Iniciar sesión con Google
+      </a>
+      <a class="btn social-btn github" href="{{ url_for('auth.social_login', provider='github', next=request.args.get('next', '')) }}">
+        <span aria-hidden="true">●</span> Iniciar sesión con GitHub
+      </a>
+    </div>
   </div>
   <div class="marq"><span>★ BIENVENIDO A MYPIXEL ★ COMPARTE CÓDIGO ★ VALORA ★ COMENTA ★ CHATEA EN VIVO ★ INSERT COIN TO CONTINUE ★</span></div>
 </div>

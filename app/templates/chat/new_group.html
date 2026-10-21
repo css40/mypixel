@@ -7,8 +7,22 @@
   <form method="post" class="body" novalidate style="max-width:520px">
     {{ form.hidden_tag() }}
     {{ field(form.name, help="Por ejemplo: python-backend, sql-help, react-juniors") }}
-    {{ field(form.description) }}
+    {{ field(form.description, help="Opcional: explica de qué trata el grupo. Lo verán todos los miembros.") }}
+    <div>
+      <label class="inline" style="font-family:var(--body);font-size:1.3rem">{{ form.is_private() }} {{ form.is_private.label.text }}</label>
+      <p class="help">Público: aparece en la lista y cualquiera puede unirse. Privado: no aparece en la lista; los invitados reciben la invitación en Notificaciones y deciden si entrar.</p>
+    </div>
+    <div id="invite-box">
+      {{ field(form.invite_users, help="Nombres de usuario separados por comas, ej: ana, luis. Podrás invitar a más después.") }}
+    </div>
     <div class="row"><button class="btn pink">CREAR GRUPO ▶</button></div>
   </form>
 </div>
+<script>
+  (function () {
+    var cb = document.getElementById("{{ form.is_private.id }}"), box = document.getElementById("invite-box");
+    function sync() { box.style.display = cb.checked ? "" : "none"; }
+    cb.addEventListener("change", sync); sync();
+  })();
+</script>
 {% endblock %}

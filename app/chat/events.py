@@ -16,7 +16,7 @@ from flask_socketio import emit, join_room, leave_room
 from sqlalchemy.exc import SQLAlchemyError
 
 from ..extensions import db, socketio
-from ..models import Group, Message, Notification, ReadMarker, User, dm_room
+from ..models import Group, Message, ReadMarker, User, dm_room
 
 MAX_LEN = 2000
 
@@ -89,8 +89,6 @@ def handle_join(data):
         if room:
             # Marca como leído antes de unirse para no añadir el mensaje actual
             # al contador de no leídos.
-            if data.get("type") == "dm":
-                Notification.mark_dm_read(current_user.id, target.id)
             ReadMarker.mark_read(current_user.id, _conv_key(data.get("type"), target))
             join_room(room)
             emit("joined", {"room": room})
@@ -113,14 +111,12 @@ def handle_leave(data):
 @socketio.on("mark_read")
 def handle_mark_read(data):
     """El cliente lo envía cuando llega un mensaje y la conversación está abierta en pantalla:
-    así no queda como 'no leído' en la campana ni en la barra lateral."""
+    así no queda como 'no leído' (contador del icono del chat y barra lateral)."""
     if not current_user.is_authenticated or not isinstance(data, dict):
         return
     try:
         room, target = _resolve_room(data.get("type"), data.get("id"))
         if room:
-            if data.get("type") == "dm":
-                Notification.mark_dm_read(current_user.id, target.id)
             ReadMarker.mark_read(current_user.id, _conv_key(data.get("type"), target))
     except SQLAlchemyError:
         _report_socket_db_error("Error de base de datos al marcar una conversación como leída")
@@ -201,11 +197,6 @@ def handle_send_message(data):
         db.session.add(msg)
         db.session.flush()
         payload = msg.to_dict()
-        if kind == "dm":
-            # Aviso en la campana: así sabes quién te escribió aunque no estés en el chat.
-            Notification.notify_message(
-                target.id, sender.id,
-                ("[código] " + body[:60]) if is_code else body[:80])
         group_member_ids = (
             [member.user_id for member in target.members]
             if kind == "group" else []

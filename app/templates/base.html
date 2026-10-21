@@ -74,7 +74,7 @@
           <a href="{{ url_for('posts.feed') }}" class="{{ 'on' if ep == 'posts.feed' }}">🏠 INICIO</a>
           <a href="{{ url_for('main.about') }}" class="{{ 'on' if ep == 'main.about' }}">📖 ACERCA DE</a>
           {% if current_user.is_authenticated %}
-            <a href="{{ url_for('chat.index') }}" class="{{ 'on' if ep.startswith('chat.') }}">💬 CHAT</a>
+            <a href="{{ url_for('chat.index') }}" class="{{ 'on' if ep.startswith('chat.') }}"><span class="emo-wrap">💬{% if unread_chat_count %}<b class="chat-count" aria-label="{{ unread_chat_count }} mensajes sin leer">{{ unread_chat_count if unread_chat_count < 100 else '99+' }}</b>{% else %}<b class="chat-count hidden"></b>{% endif %}</span> CHAT</a>
             {% if current_user.is_admin %}<a href="{{ url_for('admin.dashboard') }}" class="{{ 'on' if ep.startswith('admin.') }}">★ ADMIN</a>{% endif %}
             <a href="{{ url_for('posts.create') }}" class="nb-post {{ 'on' if ep == 'posts.create' }}">+ NUEVO POST</a>
           {% endif %}

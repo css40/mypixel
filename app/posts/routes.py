@@ -71,6 +71,14 @@ def feed():
         query = query.where(or_(Post.title.ilike(term, escape="\\"),
                                 Post.body.ilike(term, escape="\\")))
 
+    # Sin filtros, la publicidad va fijada arriba (para todos, admin incluido) y no se repite en la lista.
+    pinned_ads = []
+    if not (lang or tag or q or following_only):
+        query = query.where(Post.is_ad.is_(False))
+        if page == 1:
+            pinned_ads = (Post.query.options(joinedload(Post.author)).filter(Post.is_ad.is_(True))
+                          .order_by(Post.created_at.desc()).limit(3).all())
+
     pagination = db.paginate(query, page=page,
                              per_page=current_app.config["POSTS_PER_PAGE"], error_out=False)
 
@@ -88,7 +96,7 @@ def feed():
 
     return render_template("posts/feed.html", pagination=pagination, posts=pagination.items,
                            active_lang=lang, active_tag=tag, q=q, sort=sort,
-                           following_only=following_only, liked_ids=liked_ids,
+                           following_only=following_only, liked_ids=liked_ids, pinned_ads=pinned_ads,
                            lang_counts=counts, popular_tags=popular_tags)
 
 

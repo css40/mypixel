@@ -20,6 +20,11 @@
       <p class="help" style="margin:-.5rem 0 1rem">Etiqueta: <b>#{{ active_tag }}</b> · <a href="{{ url_for('posts.feed', lang=active_lang or none, q=q or none, sort=sort if sort != 'recent' else none) }}">quitar</a></p>
     {% endif %}
 
+    {% for post in pinned_ads %}
+      {% set liked = false %}
+      {% include "posts/_card.html" with context %}
+    {% endfor %}
+
     {% for post in posts %}
       {% set liked = post.id in liked_ids %}
       {% include "posts/_card.html" with context %}

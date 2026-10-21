@@ -8,7 +8,7 @@
     {% if kind == 'dm' %}
       <b>DM_{{ other.username|upper }}.CHAT</b>
     {% else %}
-      <b># {{ group.name|upper }}.CHAT</b>
+      <b>{{ '🔒' if group.is_private else '#' }} {{ group.name|upper }}.CHAT</b>
       <span class="tools">
         {% if group.owner_id == current_user.id or current_user.is_admin %}
           <form method="post" action="{{ url_for('chat.delete_group', group_id=group.id) }}" data-confirm="¿Eliminar el grupo y todos sus mensajes?">
@@ -31,9 +31,38 @@
       {% if kind == 'dm' %}
         {{ avatar(other, 28) }}<a class="who" style="font-family:var(--px);font-size:.6rem;text-decoration:none" href="{{ url_for('profile.view', username=other.username) }}">@{{ other.username }}</a>
       {% else %}
-        <small class="muted" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ group.description or 'Sin descripción' }} · {{ group.member_count }} miembros</small>
+        <small class="muted" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ 'Privado' if group.is_private else 'Público' }} · {{ group.description or 'Sin descripción' }}</small>
       {% endif %}
     </div>
+
+    {% if kind == 'group' %}
+    <details class="members-panel">
+      <summary>👥 MIEMBROS ({{ members|length }})</summary>
+      {% if group.description %}<p class="members-desc">{{ group.description }}</p>{% endif %}
+      <ul class="members-list">
+        {% for m in members %}
+          <li>
+            <a href="{{ url_for('profile.view', username=m.user.username) }}">{{ avatar(m.user, 24) }} @{{ m.user.username }}</a>
+            {% if m.user_id == group.owner_id %}<span class="pill gold">CREADOR</span>{% endif %}
+            {% if (group.owner_id == current_user.id or current_user.is_admin) and m.user_id != group.owner_id %}
+              <form method="post" action="{{ url_for('chat.kick_member', group_id=group.id, user_id=m.user_id) }}" data-confirm="¿Expulsar a {{ m.user.username }} del grupo?">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button class="btn sm pink" title="Expulsar">EXPULSAR</button>
+              </form>
+            {% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+      {% if group.is_private and (group.owner_id == current_user.id or current_user.is_admin) %}
+        <form method="post" action="{{ url_for('chat.invite_to_group', group_id=group.id) }}" class="invite-form">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <label for="invite-names" class="sr-only">Invitar usuarios</label>
+          <input id="invite-names" type="text" name="usernames" maxlength="300" placeholder="Invitar: ana, luis…">
+          <button class="btn sm cyan">+ INVITAR</button>
+        </form>
+      {% endif %}
+    </details>
+    {% endif %}
 
     <ol id="messages" aria-live="polite">
       {% for m in messages %}

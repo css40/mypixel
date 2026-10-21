@@ -9,7 +9,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import joinedload
 
 from ..extensions import db
-from ..models import Notification, Post, Report, User
+from ..models import GroupInvite, Notification, Post, Report, User
 from ..posts.forms import ReportForm
 from ..utils import render_markdown, strip_markdown
 from . import bp
@@ -39,7 +39,7 @@ def about():
 def notifications():
     page = request.args.get("page", 1, type=int)
     stmt = (db.select(Notification).options(joinedload(Notification.actor), joinedload(Notification.post))
-            .where(Notification.user_id == current_user.id)
+            .where(Notification.user_id == current_user.id, Notification.kind != "message")
             .order_by(Notification.created_at.desc()))
     pagination = db.paginate(stmt, page=page, per_page=20, error_out=False)
 
@@ -49,8 +49,11 @@ def notifications():
             {"read_at": datetime.utcnow()}, synchronize_session=False)
         db.session.commit()
 
+    invites = (GroupInvite.query.options(joinedload(GroupInvite.group), joinedload(GroupInvite.inviter))
+               .filter_by(user_id=current_user.id, status="pending")
+               .order_by(GroupInvite.created_at.desc()).all())
     return render_template("notifications.html", pagination=pagination,
-                           notifications=pagination.items)
+                           notifications=pagination.items, invites=invites)
 
 
 # --------------------------------------------------------------------------- #

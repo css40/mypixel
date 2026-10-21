@@ -8,7 +8,7 @@ User 1—N Rating N—1 Post        (única por usuario+post, 1-5 estrellas)
 Post 1—N CodeBlock              (varios snippets por publicación, ordenados)
 Post N—N Tag                    (tabla puente post_tags)
 User N—N User (Follow)          (seguidor / seguido)
-User 1—N Notification           (avisos: comentario, like, valoración, seguidor, mensaje, reportes)
+User 1—N Notification           (avisos: comentario, like, valoración, seguidor, reportes, invitaciones)
 Report                          (denuncia de una publicación o de un perfil, la resuelve el admin)
 User 1—N ReadMarker             (última lectura por conversación de chat, persistente)
 User 1—N Message (sender) / User 1—N Message (recipient)  -> chat privado
@@ -20,7 +20,7 @@ from urllib.parse import urlsplit
 
 from flask import current_app, url_for
 from flask_login import UserMixin
-from sqlalchemy import CheckConstraint, UniqueConstraint, func
+from sqlalchemy import CheckConstraint, String, UniqueConstraint, and_, cast, func, literal
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from .extensions import db, login_manager
@@ -139,7 +139,32 @@ class User(UserMixin, db.Model):
 
     @property
     def unread_notifications_count(self) -> int:
-        return self.notifications.filter_by(read_at=None).count()
+        # Los mensajes de chat NO cuentan aquí: tienen su propio contador en el icono del chat.
+        return (self.notifications.filter(Notification.read_at.is_(None),
+                                          Notification.kind != "message").count())
+
+    @property
+    def unread_chat_count(self) -> int:
+        """Mensajes sin leer en chats directos y grupos (se muestra en el icono 💬 del menú)."""
+        epoch = datetime(1970, 1, 1)
+        q = db.session.query
+        dm = (q(func.count(Message.id))
+              .outerjoin(ReadMarker, and_(
+                  ReadMarker.user_id == self.id,
+                  ReadMarker.conv_key == literal("dm_").concat(cast(Message.sender_id, String))))
+              .filter(Message.recipient_id == self.id,
+                      Message.created_at > func.coalesce(ReadMarker.last_read_at, epoch))
+              .scalar()) or 0
+        grp = (q(func.count(Message.id)).select_from(Message)
+               .join(GroupMember, and_(GroupMember.group_id == Message.group_id,
+                                       GroupMember.user_id == self.id))
+               .outerjoin(ReadMarker, and_(
+                   ReadMarker.user_id == self.id,
+                   ReadMarker.conv_key == literal("group_").concat(cast(Message.group_id, String))))
+               .filter(Message.sender_id != self.id,
+                       Message.created_at > func.coalesce(ReadMarker.last_read_at, epoch))
+               .scalar()) or 0
+        return int(dm) + int(grp)
 
     def __repr__(self) -> str:
         return f"<User {self.username}>"
@@ -334,7 +359,7 @@ class Rating(db.Model):
 class Notification(db.Model):
     """Aviso persistente.
 
-    kind: comment | like | rating | follow | message | report_result | warning
+    kind: comment | like | rating | follow | report_result | warning | group_invite
     `message` guarda un texto libre (vista previa del mensaje, o el detalle de la decisión
     del admin en un reporte)."""
     __tablename__ = "notifications"
@@ -361,25 +386,6 @@ class Notification(db.Model):
                          post_id=post_id, message=message)
         db.session.add(n)
         return n
-
-    @staticmethod
-    def notify_message(user_id, actor_id, preview):
-        """Aviso de mensaje directo nuevo. Mientras no lo leas, los mensajes siguientes de la
-        misma persona se agrupan en un único aviso (se actualiza la vista previa y la hora)."""
-        existing = Notification.query.filter_by(user_id=user_id, actor_id=actor_id,
-                                                kind="message", read_at=None).first()
-        if existing:
-            existing.message = preview
-            existing.created_at = utcnow()
-            return existing
-        return Notification.notify(user_id, actor_id, "message", message=preview)
-
-    @staticmethod
-    def mark_dm_read(user_id, actor_id):
-        """Marca como leídos los avisos de mensajes que `actor_id` envió a `user_id`."""
-        Notification.query.filter_by(user_id=user_id, actor_id=actor_id,
-                                     kind="message", read_at=None).update(
-            {"read_at": utcnow()}, synchronize_session=False)
 
 
 # --------------------------------------------------------------------------- #
@@ -444,6 +450,7 @@ class Group(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(60), unique=True, nullable=False)
     description = db.Column(db.String(255), default="", nullable=False)
+    is_private = db.Column(db.Boolean, default=False, nullable=False)  # privado = solo por invitación
     created_at = db.Column(db.DateTime, default=utcnow, nullable=False)
     owner_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
 
@@ -453,6 +460,8 @@ class Group(db.Model):
     messages = db.relationship("Message", back_populates="group",
                                cascade="all, delete-orphan", lazy="dynamic",
                                order_by="Message.created_at")
+    invites = db.relationship("GroupInvite", back_populates="group", cascade="all, delete-orphan")
+    bans = db.relationship("GroupBan", cascade="all, delete-orphan")
 
     def has_member(self, user) -> bool:
         return GroupMember.query.filter_by(group_id=self.id, user_id=user.id).first() is not None
@@ -460,6 +469,33 @@ class Group(db.Model):
     @property
     def member_count(self) -> int:
         return len(self.members)
+
+
+class GroupInvite(db.Model):
+    """Invitación a un grupo privado. El invitado la ve en Notificaciones y acepta o rechaza."""
+    __tablename__ = "group_invites"
+
+    id = db.Column(db.Integer, primary_key=True)
+    group_id = db.Column(db.Integer, db.ForeignKey("groups.id"), nullable=False, index=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False, index=True)     # invitado
+    inviter_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    status = db.Column(db.String(10), default="pending", nullable=False)  # pending | accepted | declined
+    created_at = db.Column(db.DateTime, default=utcnow, nullable=False)
+
+    group = db.relationship("Group", back_populates="invites")
+    user = db.relationship("User", foreign_keys=[user_id])
+    inviter = db.relationship("User", foreign_keys=[inviter_id])
+
+
+class GroupBan(db.Model):
+    """Usuario expulsado de un grupo: no puede volver a entrar solo (en privados, solo con nueva invitación)."""
+    __tablename__ = "group_bans"
+    __table_args__ = (UniqueConstraint("group_id", "user_id", name="uq_group_ban"),)
+
+    id = db.Column(db.Integer, primary_key=True)
+    group_id = db.Column(db.Integer, db.ForeignKey("groups.id"), nullable=False, index=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False, index=True)
+    created_at = db.Column(db.DateTime, default=utcnow, nullable=False)
 
 
 class GroupMember(db.Model):

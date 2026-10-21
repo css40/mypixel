@@ -126,6 +126,13 @@
 
   socket.on("error_message", (e) => setStatus(e.error, false));
 
+  // Te expulsaron del grupo que tenías abierto
+  socket.on("kicked", (d) => {
+    if (cfg.kind === "group" && Number(cfg.targetId) === Number(d.group_id)) {
+      window.location.href = "/chat/";
+    }
+  });
+
   // ---- Moderación: el admin elimina mensajes ----
   socket.on("message_deleted", (d) => {
     const li = list && list.querySelector(`[data-id="${d.id}"]`);
@@ -151,18 +158,18 @@
   });
 
   // ---- Notificaciones de otras conversaciones (punto ámbar en la barra lateral) ----
-  function bumpBell() {
-    const bell = document.querySelector('.nb-icon[aria-label="Notificaciones"]');
-    if (!bell) return;
-    let c = bell.querySelector(".count");
-    if (!c) { c = document.createElement("span"); c.className = "count"; c.textContent = "0"; bell.appendChild(c); }
+  // Contador del icono 💬 del menú (mensajes de otras conversaciones)
+  function bumpChatCount() {
+    const c = document.querySelector(".nb-tabs .chat-count");
+    if (!c) return;
     const n = parseInt(c.textContent, 10);
     c.textContent = n >= 99 ? "99+" : String((isNaN(n) ? 0 : n) + 1);
+    c.classList.remove("hidden");
   }
 
   socket.on("notification", (n) => {
     if (n.key === cfg.activeKey) return;
-    if (n.key.startsWith("dm_")) bumpBell();
+    bumpChatCount();
     const link = document.querySelector(`.conv-link[data-conv="${n.key}"]`);
     if (link) {
       link.classList.add("has-unread");

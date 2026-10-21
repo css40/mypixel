@@ -64,7 +64,14 @@ def create_app(config_name: str = None) -> Flask:
     def inject_globals():
         from flask_login import current_user
         unread = current_user.unread_notifications_count if current_user.is_authenticated else 0
+        chat_unread = 0
+        if current_user.is_authenticated:
+            try:
+                chat_unread = current_user.unread_chat_count
+            except Exception:  # noqa: BLE001 - un fallo del contador nunca debe romper la página
+                db.session.rollback()
         return {
+            "unread_chat_count": chat_unread,
             "LANGUAGES": app.config["LANGUAGES"],
             "unread_notifications_count": unread,
             "current_user": current_user,
@@ -91,6 +98,7 @@ def _ensure_columns(app: Flask) -> None:
         },
         "posts": {"is_ad": "BOOLEAN NOT NULL DEFAULT FALSE"},
         "notifications": {"message": "TEXT"},
+        "groups": {"is_private": "BOOLEAN NOT NULL DEFAULT FALSE"},
     }
     try:
         insp = inspect(db.engine)

@@ -3,6 +3,33 @@
 {% block title %}Notificaciones{% endblock %}
 {% block content %}
 <div style="max-width:720px;margin:0 auto">
+  {% if invites %}
+  <div class="win">
+    {{ winbar('INVITACIONES_PENDIENTES (' ~ invites|length ~ ')', 'c-pink') }}
+    <div style="padding:0">
+      {% for i in invites %}
+        <div class="notif unread">
+          <a class="av-link" href="{{ url_for('profile.view', username=i.inviter.username) }}">{{ avatar(i.inviter, 36) }}</a>
+          <div style="min-width:0;flex:1">
+            <p><b>@{{ i.inviter.username }}</b> te invitó al grupo privado <b>🔒 {{ i.group.name }}</b></p>
+            {% if i.group.description %}<p class="notif-detail">{{ i.group.description }}</p>{% endif %}
+            <small class="muted">{{ i.group.member_count }} miembros · {{ i.created_at|timeago }}</small>
+            <div class="row" style="margin-top:.5rem">
+              <form method="post" action="{{ url_for('chat.answer_invite', invite_id=i.id, action='accept') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button class="btn sm green">✔ ACEPTAR</button>
+              </form>
+              <form method="post" action="{{ url_for('chat.answer_invite', invite_id=i.id, action='decline') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button class="btn sm ghost">✕ RECHAZAR</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
   <div class="win">
     {{ winbar('NOTIFICACIONES.LOG', 'c-yellow') }}
     <div style="padding:0">
@@ -16,13 +43,12 @@
             {% elif n.kind == 'warning' %}
               <p><span class="pill" style="background:var(--pink);color:var(--cream)">⚠ ADVERTENCIA</span></p>
               <p class="notif-detail">{{ n.message }}</p>
-            {% elif n.kind == 'message' %}
+            {% elif n.kind == 'group_invite' %}
               <p>
                 <a class="who" style="font-family:var(--px);font-size:.6rem;text-decoration:none" href="{{ url_for('profile.view', username=n.actor.username) }}">@{{ n.actor.username }}</a>
-                te envió un mensaje
+                <span class="pill">GRUPO</span>
               </p>
-              {% if n.message %}<p class="notif-detail">“{{ n.message }}”</p>{% endif %}
-              <p><a class="btn sm cyan" href="{{ url_for('chat.direct', username=n.actor.username) }}">💬 ABRIR CHAT</a></p>
+              <p class="notif-detail">{{ n.message }} {% if invites %}Respóndela arriba, en “Invitaciones pendientes”.{% endif %}</p>
             {% else %}
             <p>
               <a class="who" style="font-family:var(--px);font-size:.6rem;text-decoration:none" href="{{ url_for('profile.view', username=n.actor.username) }}">@{{ n.actor.username }}</a>
@@ -38,7 +64,7 @@
           </div>
         </div>
       {% else %}
-        <div class="empty"><img class="mascot sm" src="{{ url_for('static', filename='img/noti.png') }}" alt="" width="130" height="119" loading="lazy"><br>SIN NOTIFICACIONES Dev<br><small style="font-family:var(--body);font-size:1.2rem">Cuando alguien te escriba, comente, valore o te siga, aparecerá aquí.</small></div>
+        <div class="empty"><img class="mascot sm" src="{{ url_for('static', filename='img/noti.png') }}" alt="" width="130" height="119" loading="lazy"><br>SIN NOTIFICACIONES Dev<br><small style="font-family:var(--body);font-size:1.2rem">Cuando alguien comente, valore, te siga o te invite a un grupo, aparecerá aquí.</small></div>
       {% endfor %}
     </div>
   </div>

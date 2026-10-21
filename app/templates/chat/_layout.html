@@ -13,7 +13,7 @@
           {% for g in my_groups %}
             <li><a href="{{ url_for('chat.group', group_id=g.id) }}" data-conv="group_{{ g.id }}"
                    class="conv-link {{ 'active' if active_key == 'group_' ~ g.id }} {{ 'has-unread' if g.has_unread }}">
-              <span class="nm"># {{ g.name }}</span><span class="badge {{ '' if g.has_unread else 'hidden' }}"></span></a></li>
+              <span class="nm">{{ '🔒' if g.is_private else '#' }} {{ g.name }}</span><span class="badge {{ '' if g.has_unread else 'hidden' }}"></span></a></li>
           {% else %}<li class="help" style="padding:.2rem .5rem">Aún no estás en ningún grupo.</li>{% endfor %}
         </ul>
 

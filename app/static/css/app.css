@@ -681,3 +681,22 @@ h1.ptitle { font-size: 1.05rem !important; }
 .report-details { margin: .8rem 0; padding: .6rem .8rem; background: var(--paper); border-left: 6px solid var(--pink); white-space: pre-line; word-break: break-word; }
 .report-resolve { display: grid; gap: .5rem; margin-top: 1rem; padding-top: .9rem; border-top: 3px dashed var(--line); }
 .report-resolve label { font-family: var(--px); font-size: .5rem; }
+
+/* ---------- contador de mensajes sin leer (en el emoji 💬 del menú) ---------- */
+.emo-wrap { position: relative; display: inline-block; }
+.chat-count {
+  position: absolute; top: -9px; right: -13px; min-width: 18px; padding: 2px 4px; text-align: center;
+  font-family: var(--px); font-size: .42rem; font-weight: normal; line-height: 1.2;
+  background: var(--pink); color: #fff; border: 2px solid var(--top);
+}
+
+/* ---------- miembros del grupo ---------- */
+.members-panel { border-bottom: 2px solid var(--line); background: var(--win); }
+.members-panel summary { cursor: pointer; padding: .45rem .8rem; font-family: var(--px); font-size: .5rem; }
+.members-desc { padding: 0 .8rem .4rem; font-size: 1.15rem; opacity: .85; word-break: break-word; }
+.members-list { list-style: none; padding: 0 .8rem .6rem; max-height: 11rem; overflow-y: auto; display: grid; gap: .3rem; }
+.members-list li { display: flex; align-items: center; gap: .5rem; justify-content: space-between; flex-wrap: wrap; }
+.members-list li > a { display: flex; align-items: center; gap: .4rem; text-decoration: none; min-width: 0; }
+.members-list form { display: inline; margin-left: auto; }
+.invite-form { display: flex; gap: .4rem; padding: 0 .8rem .7rem; }
+.invite-form input { flex: 1; min-width: 0; }

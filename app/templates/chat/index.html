@@ -24,19 +24,21 @@
       </ul>
     {% endif %}
 
-    <h2 class="title sm" style="margin-top:1.6rem">GRUPOS PARA UNIRTE</h2>
+    <h2 class="title sm" style="margin-top:1.6rem">GRUPOS PÚBLICOS PARA UNIRTE</h2>
     <ul class="list">
       {% for g in other_groups %}
         <li>
           <div style="min-width:0">
-            <b style="font-weight:normal;font-family:var(--px);font-size:.6rem"># {{ g.name }}</b><br>
+            <b style="font-weight:normal;font-family:var(--px);font-size:.6rem">{{ '🔒' if g.is_private else '#' }} {{ g.name }}</b><br>
             <small class="muted">{{ g.description or 'Sin descripción' }} · {{ g.member_count }} miembros</small>
           </div>
           <span style="display:flex;gap:.4rem;flex-wrap:wrap;justify-content:flex-end">
+            {% if not g.is_private %}
             <form method="post" action="{{ url_for('chat.join_group', group_id=g.id) }}">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <button class="btn sm">UNIRME</button>
             </form>
+            {% endif %}
             {% if current_user.is_admin %}
               <a href="{{ url_for('chat.group', group_id=g.id) }}" class="btn sm cyan">VER</a>
               <form method="post" action="{{ url_for('chat.delete_group', group_id=g.id) }}" data-confirm="¿Eliminar el grupo «{{ g.name }}» y todos sus mensajes?">

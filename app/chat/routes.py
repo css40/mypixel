@@ -4,7 +4,9 @@ from sqlalchemy import func, or_
 from sqlalchemy.exc import SQLAlchemyError
 
 from ..extensions import db
-from ..models import Group, GroupMember, Message, Notification, ReadMarker, User, dm_room
+from ..extensions import socketio
+from ..models import (Group, GroupBan, GroupInvite, GroupMember, Message, Notification,
+                      ReadMarker, User, dm_room)
 from ..utils import escape_like
 from . import bp
 from .forms import GroupForm
@@ -103,8 +105,12 @@ def index():
                  .order_by(User.username).limit(20).all())
 
     my_group_ids = {g.id for g in my_groups}
-    other_groups = (Group.query.filter(~Group.id.in_(my_group_ids)) if my_group_ids
-                    else Group.query).order_by(Group.created_at.desc()).limit(20).all()
+    other = Group.query
+    if my_group_ids:
+        other = other.filter(~Group.id.in_(my_group_ids))
+    if not current_user.is_admin:
+        other = other.filter(Group.is_private.is_(False))   # los privados no se listan
+    other_groups = other.order_by(Group.created_at.desc()).limit(20).all()
 
     return render_template("chat/index.html", partners=partners, my_groups=my_groups,
                            found_users=users, other_groups=other_groups, q=q,
@@ -126,8 +132,6 @@ def direct(username):
                 .order_by(Message.created_at.desc()).limit(HISTORY_LIMIT).all())
     messages.reverse()
 
-    # Al abrir el chat, los avisos de "te escribió X" de la campana pasan a leídos.
-    Notification.mark_dm_read(current_user.id, other.id)
     if not _mark_read(current_user.id, f"dm_{other.id}"):
         return redirect(url_for("chat.index"))
     partners, my_groups = _sidebar_data(extra_partner=other)
@@ -153,10 +157,41 @@ def group(group_id):
     if not _mark_read(current_user.id, f"group_{grp.id}"):
         return redirect(url_for("chat.index"))
     partners, my_groups = _sidebar_data()
+    members = sorted(grp.members, key=lambda m: (m.user_id != grp.owner_id, m.user.username.lower()))
     return render_template("chat/room.html", kind="group", target_id=grp.id, title=grp.name,
-                           other=None, group=grp, messages=messages,
+                           other=None, group=grp, messages=messages, members=members,
                            partners=partners, my_groups=my_groups, active_key=f"group_{grp.id}",
                            room=f"group_{grp.id}")
+
+
+def _invite_users(grp, usernames):
+    """Crea invitaciones (y su aviso en Notificaciones). Devuelve (invitados, no_encontrados)."""
+    invited, missing = [], []
+    for name in usernames:
+        user = User.query.filter(func.lower(User.username) == name.lower()).first()
+        if not user or user.is_banned:
+            missing.append(name)
+            continue
+        if user.id == current_user.id or grp.has_member(user):
+            continue
+        if GroupInvite.query.filter_by(group_id=grp.id, user_id=user.id, status="pending").first():
+            continue
+        GroupBan.query.filter_by(group_id=grp.id, user_id=user.id).delete()  # volver a invitar = perdonar
+        db.session.add(GroupInvite(group_id=grp.id, user_id=user.id, inviter_id=current_user.id))
+        Notification.notify(user.id, current_user.id, "group_invite",
+                            message=f"Te invitó al grupo privado «{grp.name}».")
+        invited.append(user.username)
+    return invited, missing
+
+
+def _split_usernames(raw):
+    seen, result = set(), []
+    for chunk in (raw or "").replace("@", "").replace(";", ",").replace("\n", ",").split(","):
+        name = chunk.strip()
+        if name and name.lower() not in seen:
+            seen.add(name.lower())
+            result.append(name)
+    return result[:20]
 
 
 @bp.route("/groups/new", methods=["GET", "POST"])
@@ -165,24 +200,115 @@ def new_group():
     form = GroupForm()
     if form.validate_on_submit():
         grp = Group(name=form.name.data.strip(), description=(form.description.data or "").strip(),
-                    owner_id=current_user.id)
+                    is_private=bool(form.is_private.data), owner_id=current_user.id)
         grp.members.append(GroupMember(user_id=current_user.id, role="admin"))
         db.session.add(grp)
+        db.session.flush()
+        invited, missing = ([], [])
+        if grp.is_private:
+            invited, missing = _invite_users(grp, _split_usernames(form.invite_users.data))
         if not _commit_chat_changes():
             partners, my_groups = _sidebar_data()
             return render_template("chat/new_group.html", form=form, partners=partners,
                                    my_groups=my_groups, active_key=None)
-        flash("Grupo creado.", "success")
+        flash("Grupo privado creado." if grp.is_private else "Grupo público creado.", "success")
+        if invited:
+            flash("Invitaciones enviadas a: " + ", ".join(invited) + ".", "info")
+        if missing:
+            flash("No encontré a: " + ", ".join(missing) + ".", "error")
         return redirect(url_for("chat.group", group_id=grp.id))
     partners, my_groups = _sidebar_data()
     return render_template("chat/new_group.html", form=form, partners=partners,
                            my_groups=my_groups, active_key=None)
 
 
+def _can_manage(grp):
+    return grp.owner_id == current_user.id or current_user.is_admin
+
+
+@bp.route("/group/<int:group_id>/invite", methods=["POST"])
+@login_required
+def invite_to_group(group_id):
+    grp = db.get_or_404(Group, group_id)
+    if not _can_manage(grp):
+        abort(403)
+    if not grp.is_private:
+        flash("Los grupos públicos no necesitan invitación: cualquiera puede unirse.", "info")
+        return redirect(url_for("chat.group", group_id=grp.id))
+    names = _split_usernames(request.form.get("usernames", ""))
+    if not names:
+        flash("Escribe al menos un nombre de usuario.", "error")
+        return redirect(url_for("chat.group", group_id=grp.id))
+    invited, missing = _invite_users(grp, names)
+    if not _commit_chat_changes():
+        return redirect(url_for("chat.group", group_id=grp.id))
+    if invited:
+        flash("Invitación enviada a: " + ", ".join(invited) + ".", "success")
+    if missing:
+        flash("No encontré a: " + ", ".join(missing) + ".", "error")
+    if not invited and not missing:
+        flash("Esas personas ya están en el grupo o ya tienen una invitación pendiente.", "info")
+    return redirect(url_for("chat.group", group_id=grp.id))
+
+
+@bp.route("/group/<int:group_id>/kick/<int:user_id>", methods=["POST"])
+@login_required
+def kick_member(group_id, user_id):
+    grp = db.get_or_404(Group, group_id)
+    if not _can_manage(grp):
+        abort(403)
+    if user_id == grp.owner_id:
+        flash("No se puede expulsar al creador del grupo.", "error")
+        return redirect(url_for("chat.group", group_id=grp.id))
+    member = GroupMember.query.filter_by(group_id=grp.id, user_id=user_id).first_or_404()
+    username = member.user.username
+    db.session.delete(member)
+    if not GroupBan.query.filter_by(group_id=grp.id, user_id=user_id).first():
+        db.session.add(GroupBan(group_id=grp.id, user_id=user_id))
+    if not _commit_chat_changes():
+        return redirect(url_for("chat.group", group_id=grp.id))
+    # Si la persona tiene el chat abierto, se le saca al momento.
+    socketio.emit("kicked", {"group_id": grp.id}, to=f"user_{user_id}")
+    flash(f"{username} fue expulsado del grupo.", "info")
+    return redirect(url_for("chat.group", group_id=grp.id))
+
+
+@bp.route("/invite/<int:invite_id>/<action>", methods=["POST"])
+@login_required
+def answer_invite(invite_id, action):
+    invite = db.get_or_404(GroupInvite, invite_id)
+    if invite.user_id != current_user.id or action not in ("accept", "decline"):
+        abort(403)
+    if invite.status != "pending":
+        flash("Esa invitación ya fue respondida.", "info")
+        return redirect(url_for("main.notifications"))
+    grp = invite.group
+    if action == "accept":
+        invite.status = "accepted"
+        if not grp.has_member(current_user):
+            db.session.add(GroupMember(group_id=grp.id, user_id=current_user.id))
+        GroupBan.query.filter_by(group_id=grp.id, user_id=current_user.id).delete()
+        if not _commit_chat_changes():
+            return redirect(url_for("main.notifications"))
+        flash(f"Te uniste a {grp.name}.", "success")
+        return redirect(url_for("chat.group", group_id=grp.id))
+    invite.status = "declined"
+    if not _commit_chat_changes():
+        return redirect(url_for("main.notifications"))
+    flash("Invitación rechazada.", "info")
+    return redirect(url_for("main.notifications"))
+
+
 @bp.route("/group/<int:group_id>/join", methods=["POST"])
 @login_required
 def join_group(group_id):
     grp = db.get_or_404(Group, group_id)
+    if grp.is_private and not current_user.is_admin:
+        flash("Este grupo es privado: solo se entra con una invitación.", "error")
+        return redirect(url_for("chat.index"))
+    if GroupBan.query.filter_by(group_id=grp.id, user_id=current_user.id).first():
+        flash("Fuiste expulsado de este grupo y no puedes volver a entrar.", "error")
+        return redirect(url_for("chat.index"))
     if not grp.has_member(current_user):
         db.session.add(GroupMember(group_id=grp.id, user_id=current_user.id))
         if not _commit_chat_changes():

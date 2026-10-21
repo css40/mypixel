@@ -221,6 +221,7 @@ def social_login(provider):
     return redirect(url_for("auth.login"))
 
 
+@bp.route("/authorize/<provider>")
 def authorize(provider):
     if provider not in {"google", "github"}:
         return redirect(url_for("auth.login"))
@@ -232,10 +233,12 @@ def authorize(provider):
     try:
         token = client.authorize_access_token()
         if provider == "google":
-            profile = token.get("userinfo") or {}
-            if not isinstance(profile, dict):
-                raise ValueError("Google devolvió un perfil no válido.")
-            if profile.get("email_verified") is not True:
+            # Consultamos explícitamente el endpoint userinfo de Google para mayor compatibilidad
+            resp = client.get('https://www.googleapis.com/oauth2/v3/userinfo')
+            profile = resp.json() if resp.status_code == 200 else {}
+            if not isinstance(profile, dict) or not profile.get("email"):
+                raise ValueError("Google no devolvió información de perfil válida.")
+            if profile.get("email_verified") is False:
                 raise ValueError("Google no confirmó que el correo esté verificado.")
             email = profile.get("email")
             username = email.partition("@")[0] if isinstance(email, str) else ""

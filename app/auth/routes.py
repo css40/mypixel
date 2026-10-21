@@ -206,6 +206,10 @@ def social_login(provider):
         current_app.logger.info(
             "Iniciando OAuth %s con redirect_uri=%s", provider, callback_url
         )
+        if provider == "google":
+            return client.authorize_redirect(
+                callback_url, scope="openid email profile"
+            )
         return client.authorize_redirect(callback_url)
     except OAuthError as exc:
         _log_oauth_error(provider, "solicitud de autorización", exc)

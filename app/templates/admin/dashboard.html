@@ -4,6 +4,10 @@
 {% block admin_content %}
 <h1 class="title">PANEL DE ADMINISTRACIÓN</h1>
 
+{% if stats.reports %}
+  <p class="flash error" role="status">⚑ HAY {{ stats.reports }} REPORTE{{ 'S' if stats.reports != 1 }} POR REVISAR · <a href="{{ url_for('admin.reports') }}" style="text-decoration:underline">VER AHORA</a></p>
+{% endif %}
+
 <div class="statgrid">
   {% for label, value in [('USUARIOS', stats.users), ('POSTS', stats.posts), ('COMENTS', stats.comments), ('GRUPOS', stats.groups), ('SUSPENDIDOS', stats.banned)] %}
     <div><b>{{ value }}</b><small>{{ label }}</small></div>

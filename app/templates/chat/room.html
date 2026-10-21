@@ -10,12 +10,13 @@
     {% else %}
       <b># {{ group.name|upper }}.CHAT</b>
       <span class="tools">
-        {% if group.owner_id == current_user.id %}
+        {% if group.owner_id == current_user.id or current_user.is_admin %}
           <form method="post" action="{{ url_for('chat.delete_group', group_id=group.id) }}" data-confirm="¿Eliminar el grupo y todos sus mensajes?">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <button class="btn sm pink">ELIMINAR</button>
           </form>
-        {% else %}
+        {% endif %}
+        {% if group.owner_id != current_user.id and group.has_member(current_user) %}
           <form method="post" action="{{ url_for('chat.leave_group', group_id=group.id) }}" data-confirm="¿Salir del grupo?">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <button class="btn sm">SALIR</button>
@@ -39,7 +40,7 @@
         <li class="msg {{ 'me' if m.sender_id == current_user.id }}" data-id="{{ m.id }}">
           {{ avatar(m.sender, 30) }}
           <div class="col">
-            <div class="meta">{{ m.sender.username }}<time data-ts="{{ m.created_at.isoformat() }}Z"></time></div>
+            <div class="meta">{{ m.sender.username }}<time data-ts="{{ m.created_at.isoformat() }}Z"></time>{% if current_user.is_admin %}<button type="button" class="msg-del" data-del="{{ m.id }}" title="Eliminar mensaje" aria-label="Eliminar mensaje">✕</button>{% endif %}</div>
             {% if m.is_code %}
               <div class="chat-code">{{ code_block(m.body, m.code_language or 'plaintext') }}</div>
             {% else %}

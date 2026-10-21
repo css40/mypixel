@@ -32,10 +32,19 @@
             <b style="font-weight:normal;font-family:var(--px);font-size:.6rem"># {{ g.name }}</b><br>
             <small class="muted">{{ g.description or 'Sin descripción' }} · {{ g.member_count }} miembros</small>
           </div>
-          <form method="post" action="{{ url_for('chat.join_group', group_id=g.id) }}">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <button class="btn sm">UNIRME</button>
-          </form>
+          <span style="display:flex;gap:.4rem;flex-wrap:wrap;justify-content:flex-end">
+            <form method="post" action="{{ url_for('chat.join_group', group_id=g.id) }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button class="btn sm">UNIRME</button>
+            </form>
+            {% if current_user.is_admin %}
+              <a href="{{ url_for('chat.group', group_id=g.id) }}" class="btn sm cyan">VER</a>
+              <form method="post" action="{{ url_for('chat.delete_group', group_id=g.id) }}" data-confirm="¿Eliminar el grupo «{{ g.name }}» y todos sus mensajes?">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button class="btn sm pink">ELIMINAR</button>
+              </form>
+            {% endif %}
+          </span>
         </li>
       {% else %}
         <li class="muted">No hay más grupos. <a style="color:var(--pink)" href="{{ url_for('chat.new_group') }}">Crea el primero.</a></li>

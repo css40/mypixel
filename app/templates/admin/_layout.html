@@ -11,6 +11,8 @@
           <li><a href="{{ url_for('admin.dashboard') }}" class="{{ 'on' if request.endpoint == 'admin.dashboard' }}">Resumen</a></li>
           <li><a href="{{ url_for('admin.users') }}" class="{{ 'on' if request.endpoint == 'admin.users' }}">Usuarios</a></li>
           <li><a href="{{ url_for('admin.posts') }}" class="{{ 'on' if request.endpoint == 'admin.posts' }}">Publicaciones</a></li>
+          <li><a href="{{ url_for('admin.reports') }}" class="{{ 'on' if request.endpoint == 'admin.reports' }}">Reportes{% if pending_reports %}<span>{{ pending_reports }}</span>{% endif %}</a></li>
+          <li><a href="{{ url_for('posts.create_ad') }}">★ Nuevo anuncio</a></li>
         </ul>
       </div>
     </div>

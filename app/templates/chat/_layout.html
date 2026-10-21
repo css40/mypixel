@@ -35,6 +35,6 @@
 
 {% block scripts %}
   <script src="https://cdn.socket.io/4.7.5/socket.io.min.js" crossorigin="anonymous"></script>
-  <script>window.CHAT = { activeKey: {{ (active_key or '')|tojson }}, kind: {{ (kind or '')|tojson }}, targetId: {{ (target_id or 0)|tojson }}, me: {{ current_user.id|tojson }} };</script>
+  <script>window.CHAT = { activeKey: {{ (active_key or '')|tojson }}, kind: {{ (kind or '')|tojson }}, targetId: {{ (target_id or 0)|tojson }}, me: {{ current_user.id|tojson }}, isAdmin: {{ current_user.is_admin|tojson }} };</script>
   <script src="{{ url_for('static', filename='js/chat.js') }}"></script>
 {% endblock %}

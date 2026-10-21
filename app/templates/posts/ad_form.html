@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field, winbar %}
+{% block title %}{{ 'Editar anuncio' if editing else 'Nuevo anuncio' }}{% endblock %}
+{% block content %}
+<div style="max-width:820px;margin:0 auto">
+<div class="win">
+  {{ winbar('EDITAR_ANUNCIO.EXE' if editing else 'NUEVO_ANUNCIO.EXE', 'c-yellow') }}
+  <form method="post" enctype="multipart/form-data" class="body" novalidate>
+    {{ form.hidden_tag() }}
+    <p class="help">Publicación especial del administrador: se ve completa en el inicio (imagen, título y descripción), sin tener que abrirla.</p>
+    {{ field(form.title) }}
+    {{ field(form.body, rows=5, help="Admite Markdown. Máx. 2000 caracteres.") }}
+
+    <div>
+      <label for="{{ form.image.id }}">IMAGEN{% if not editing %} *{% endif %}</label>
+      {{ form.image(accept="image/png,image/jpeg,image/gif,image/webp") }}
+      <p class="help">PNG, JPG, GIF o WEBP. Máx. 8 MB.
+        {% if editing and post.attachment_url %}Imagen actual abajo (subir otra la reemplaza).{% endif %}</p>
+      {% if editing and post.attachment_url %}
+        <img class="ad-img" src="{{ post.attachment_url }}" alt="Imagen actual del anuncio" style="max-height:14rem;width:auto">
+      {% endif %}
+      {% for e in form.image.errors %}<p class="err">⚠ {{ e }}</p>{% endfor %}
+    </div>
+
+    <div class="row" style="margin-top:1.4rem">
+      <button class="btn pink">{{ 'GUARDAR CAMBIOS ▶' if editing else 'PUBLICAR ANUNCIO ▶' }}</button>
+      <a class="btn ghost" href="{{ url_for('posts.feed') }}">CANCELAR</a>
+    </div>
+  </form>
+</div>
+</div>
+{% endblock %}

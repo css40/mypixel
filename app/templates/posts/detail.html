@@ -12,7 +12,7 @@
           <a class="who" href="{{ url_for('profile.view', username=post.author.username) }}">@{{ post.author.username }}</a>
           <small>{{ post.created_at.strftime('%d/%m/%Y %H:%M') }}</small>
         </div>
-        {{ lang_tag(post.language) }}
+        {% if post.is_ad %}<span class="pill gold">PUBLICIDAD</span>{% else %}{{ lang_tag(post.language) }}{% endif %}
       </div>
 
       <h1 class="ptitle">{{ post.title }}</h1>
@@ -38,7 +38,7 @@
         </div>
       {% endif %}
 
-      {{ rating_widget(post, my_rating) }}
+      {% if not post.is_ad %}{{ rating_widget(post, my_rating) }}{% endif %}
 
       <div class="infobar" style="border-top:3px dashed var(--line);padding-top:.9rem">
         <button type="button" class="like-btn {{ 'is-liked' if liked }}"
@@ -48,9 +48,14 @@
           <span class="like-count">{{ post.like_count }}</span> Me gusta
         </button>
 
+        {% if current_user.is_authenticated and current_user.id != post.user_id and not post.is_ad %}
+          <a href="{{ url_for('main.report_post', post_id=post.id) }}" class="btn sm ghost" title="Reportar esta publicación">⚑ REPORTAR</a>
+        {% endif %}
+
         {% if current_user.is_authenticated and (current_user.id == post.user_id or current_user.is_admin) %}
           <span style="margin-left:auto;display:flex;gap:.5rem;align-items:center">
-            {% if current_user.id == post.user_id %}<a href="{{ url_for('posts.edit', post_id=post.id) }}" class="btn sm cyan">✎ EDITAR</a>{% endif %}
+            {% if post.is_ad %}<a href="{{ url_for('posts.edit_ad', post_id=post.id) }}" class="btn sm cyan">✎ EDITAR</a>
+            {% elif current_user.id == post.user_id %}<a href="{{ url_for('posts.edit', post_id=post.id) }}" class="btn sm cyan">✎ EDITAR</a>{% endif %}
             <form method="post" action="{{ url_for('posts.delete', post_id=post.id) }}" data-confirm="¿Eliminar esta publicación?">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <button class="btn sm pink">✕ BORRAR</button>

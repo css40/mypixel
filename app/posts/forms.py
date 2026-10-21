@@ -42,3 +42,23 @@ class PostForm(FlaskForm):
 class CommentForm(FlaskForm):
     body = TextAreaField("Comentario", validators=[DataRequired(), Length(max=2000)])
     submit = SubmitField("Comentar")
+
+
+class AdForm(FlaskForm):
+    """Publicación especial (publicidad) del administrador: imagen + título + descripción."""
+    title = StringField("Título", validators=[DataRequired(), Length(3, 150)])
+    body = TextAreaField("Descripción", validators=[DataRequired(), Length(max=2000)])
+    image = FileField("Imagen")
+    submit = SubmitField("Publicar anuncio")
+
+
+class ReportForm(FlaskForm):
+    """Reporte de una publicación o de un perfil."""
+    reason = SelectField("Motivo", validators=[DataRequired()])
+    details = TextAreaField("Cuéntanos qué pasó", validators=[DataRequired(), Length(10, 1000)])
+    submit = SubmitField("Enviar reporte")
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        from ..models import Report
+        self.reason.choices = Report.REASONS

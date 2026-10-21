@@ -111,6 +111,40 @@ def is_safe_next(target) -> bool:
     return bool(target) and target.startswith("/") and not target.startswith("//")
 
 
+def send_email(recipient: str, subject: str, *, html: str, text: str) -> bool:
+    """Envía un correo transaccional por la API HTTP de Brevo."""
+    api_key = current_app.config.get("BREVO_API_KEY")
+    sender_email = current_app.config.get("MAIL_SENDER")
+    if not api_key or not sender_email:
+        current_app.logger.warning(
+            "Correo no enviado: configura BREVO_API_KEY y MAIL_SENDER."
+        )
+        return False
+
+    payload = {
+        "sender": {
+            "name": current_app.config.get("MAIL_SENDER_NAME", "MyPixel"),
+            "email": sender_email,
+        },
+        "to": [{"email": recipient}],
+        "subject": subject,
+        "htmlContent": html,
+        "textContent": text,
+    }
+    try:
+        response = requests.post(
+            "https://api.brevo.com/v3/smtp/email",
+            headers={"api-key": api_key, "Content-Type": "application/json"},
+            json=payload,
+            timeout=15,
+        )
+        response.raise_for_status()
+    except requests.RequestException:
+        current_app.logger.exception("Brevo no pudo enviar el correo transaccional.")
+        return False
+    return True
+
+
 # --------------------------------------------------------------------------- #
 # Markdown, etiquetas
 # --------------------------------------------------------------------------- #

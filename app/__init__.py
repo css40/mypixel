@@ -83,11 +83,15 @@ def _ensure_columns(app: Flask) -> None:
     Sirve igual para SQLite local y PostgreSQL. En una base nueva no hace nada."""
     from sqlalchemy import inspect, text
 
-    wanted = {"users": {
-        "avatar_emoji": "VARCHAR(16)",
-        "avatar_color": "VARCHAR(9)",
-        "is_verified": "BOOLEAN NOT NULL DEFAULT FALSE",
-    }}
+    wanted = {
+        "users": {
+            "avatar_emoji": "VARCHAR(16)",
+            "avatar_color": "VARCHAR(9)",
+            "is_verified": "BOOLEAN NOT NULL DEFAULT FALSE",
+        },
+        "posts": {"is_ad": "BOOLEAN NOT NULL DEFAULT FALSE"},
+        "notifications": {"message": "TEXT"},
+    }
     try:
         insp = inspect(db.engine)
         for table, cols in wanted.items():

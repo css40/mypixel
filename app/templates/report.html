@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field, winbar %}
+{% block title %}Reportar{% endblock %}
+{% block content %}
+<div style="max-width:720px;margin:0 auto">
+<div class="win">
+  {{ winbar('REPORTAR_POST.EXE' if kind == 'post' else 'REPORTAR_PERFIL.EXE', 'c-pink') }}
+  <form method="post" class="body" novalidate>
+    {{ form.hidden_tag() }}
+    <p>
+      {% if kind == 'post' %}Vas a reportar la publicación <b>«{{ post.title }}»</b> de <b>@{{ offender.username }}</b>.
+      {% else %}Vas a reportar el perfil de <b>@{{ offender.username }}</b>.{% endif %}
+    </p>
+    <p class="help">Un administrador revisará tu reporte, tomará una decisión y te avisaremos con una notificación. Reporta solo si de verdad incumple las normas.</p>
+    {{ field(form.reason) }}
+    {{ field(form.details, rows=5, help="Explica qué pasó con el mayor detalle posible (10 a 1000 caracteres).") }}
+    <div class="row" style="margin-top:1.2rem">
+      <button class="btn pink">⚑ ENVIAR REPORTE</button>
+      <a class="btn ghost" href="{{ back }}">CANCELAR</a>
+    </div>
+  </form>
+</div>
+</div>
+{% endblock %}

@@ -35,6 +35,7 @@
             </form>
           {% endif %}
           <a href="{{ url_for('chat.direct', username=user.username) }}" class="btn sm cyan">✉ MENSAJE</a>
+          <a href="{{ url_for('main.report_user', username=user.username) }}" class="btn sm ghost" title="Reportar este perfil">⚑ REPORTAR</a>
         {% endif %}
       </div>
 

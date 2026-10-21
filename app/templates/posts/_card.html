@@ -1,5 +1,33 @@
 {# Tarjeta de post para feed y perfil. Espera: post, liked (bool) #}
 {% from "_macros.html" import avatar, lang_tag, rating_summary, winbar %}
+{% if post.is_ad %}
+<article class="win post ad-post" id="post-{{ post.id }}">
+  <div class="bar c-yellow">
+    <div class="dots"><span></span><span></span><span></span></div>
+    <b>★ PUBLICIDAD ★</b><span>{{ post.created_at|timeago }}</span>
+  </div>
+  <div class="body">
+    <h2 class="ptitle ad-title"><a href="{{ url_for('posts.detail', post_id=post.id) }}">{{ post.title }}</a></h2>
+    {% if post.attachment and post.attachment_is_image %}
+      <img class="ad-img" src="{{ post.attachment_url }}" alt="{{ post.title }}" loading="lazy">
+    {% endif %}
+    <div class="prose-post ad-desc">{{ post.body|md|safe }}</div>
+    <div class="infobar">
+      <span class="pill gold">PUBLICIDAD</span>
+      <span class="muted">por @{{ post.author.username }}</span>
+      {% if current_user.is_authenticated and current_user.is_admin %}
+        <span style="margin-left:auto;display:flex;gap:.5rem;align-items:center">
+          <a href="{{ url_for('posts.edit_ad', post_id=post.id) }}" class="btn sm cyan">✎ EDITAR</a>
+          <form method="post" action="{{ url_for('admin.delete_post', post_id=post.id) }}" data-confirm="¿Eliminar este anuncio?">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="btn sm pink">✕ BORRAR</button>
+          </form>
+        </span>
+      {% endif %}
+    </div>
+  </div>
+</article>
+{% else %}
 <article class="win post" id="post-{{ post.id }}">
   <div class="bar {{ ['', 'c-cyan', 'c-yellow', 'c-violet', 'c-green'][post.id % 5] }}">
     <div class="dots"><span></span><span></span><span></span></div>
@@ -42,3 +70,4 @@
     </div>
   </div>
 </article>
+{% endif %}

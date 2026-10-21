@@ -57,6 +57,7 @@
               <div class="acct-dd">
                 <a href="{{ url_for('profile.view', username=current_user.username) }}">👤 Mi perfil</a>
                 <a href="{{ url_for('profile.edit') }}">✎ Editar perfil</a>
+                <a href="{{ url_for('auth.change_password') }}">🔑 Cambiar contraseña</a>
                 <form action="{{ url_for('auth.logout') }}" method="post">
                   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                   <button type="submit">⏻ Salir</button>

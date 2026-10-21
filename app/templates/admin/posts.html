@@ -3,6 +3,7 @@
 {% block title %}Publicaciones · Admin{% endblock %}
 {% block admin_content %}
 <h1 class="title">PUBLICACIONES</h1>
+<p style="margin:0 0 1rem"><a class="btn sm pink" href="{{ url_for('posts.create_ad') }}">★ NUEVO ANUNCIO</a></p>
 <div class="win">
   {{ winbar('POSTS.DB', 'c-cyan') }}
   <div class="tblwrap">
@@ -12,7 +13,7 @@
         {% for p in posts %}
           {% set rs = p.rating_stats() %}
           <tr>
-            <td class="trunc"><a href="{{ url_for('posts.detail', post_id=p.id) }}">{{ p.title }}</a></td>
+            <td class="trunc">{% if p.is_ad %}<span class="pill gold">AD</span> {% endif %}<a href="{{ url_for('posts.detail', post_id=p.id) }}">{{ p.title }}</a></td>
             <td>@{{ p.author.username }}</td>
             <td>{{ p.language }}</td>
             <td>{{ rs[1] }} ({{ rs[0] }})</td>

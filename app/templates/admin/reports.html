@@ -1,0 +1,62 @@
+{% extends "admin/_layout.html" %}
+{% from "_macros.html" import avatar, winbar, pager %}
+{% block title %}Reportes · Admin{% endblock %}
+{% block admin_content %}
+<h1 class="title">REPORTES</h1>
+
+<div class="sorts" role="tablist" aria-label="Estado del reporte">
+  <a href="{{ url_for('admin.reports', status='pending') }}" class="{{ 'on' if status == 'pending' }}">POR REVISAR</a>
+  <a href="{{ url_for('admin.reports', status='resolved') }}" class="{{ 'on' if status == 'resolved' }}">RESUELTOS</a>
+</div>
+
+{% for r in reports %}
+  <article class="win report-card">
+    {{ winbar('REPORTE_' ~ ('%03d'|format(r.id)) ~ ('.PENDIENTE' if r.status == 'pending' else '.RESUELTO'), 'c-pink' if r.status == 'pending' else 'c-green') }}
+    <div class="body">
+      <p class="report-meta">
+        <span class="pill">{{ 'PUBLICACIÓN' if r.kind == 'post' else 'PERFIL' }}</span>
+        <span class="pill gold">{{ r.reason_label }}</span>
+        <small class="muted">{{ r.created_at|timeago }}</small>
+      </p>
+
+      <p style="margin-top:.7rem">
+        <b>Reportado:</b>
+        {% if r.kind == 'post' %}
+          {% if r.post %}<a href="{{ url_for('posts.detail', post_id=r.post.id) }}">«{{ r.target_label }}»</a>{% else %}«{{ r.target_label }}» <small class="muted">(ya eliminada)</small>{% endif %}
+          · autor <a href="{{ url_for('profile.view', username=r.reported_user.username) }}">@{{ r.reported_user.username }}</a>
+        {% else %}
+          <a href="{{ url_for('profile.view', username=r.reported_user.username) }}">@{{ r.reported_user.username }}</a>
+        {% endif %}
+        {% if r.reported_user.is_banned %}<span class="pill" style="background:var(--pink);color:var(--cream)">SUSPENDIDO</span>{% endif %}
+      </p>
+      <p><b>Reportado por:</b> <a href="{{ url_for('profile.view', username=r.reporter.username) }}">@{{ r.reporter.username }}</a></p>
+      <blockquote class="report-details">{{ r.details }}</blockquote>
+
+      {% if r.status == 'pending' %}
+        <form method="post" action="{{ url_for('admin.resolve_report', report_id=r.id) }}" class="report-resolve"
+              data-confirm="¿Aplicar esta decisión? Se enviará una notificación a quien reportó.">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <label for="decision-{{ r.id }}">DECISIÓN</label>
+          <select id="decision-{{ r.id }}" name="decision" required>
+            <option value="dismiss">{{ decisions['dismiss'] }}</option>
+            <option value="warn">{{ decisions['warn'] }}</option>
+            {% if r.kind == 'post' and r.post %}<option value="delete_post">{{ decisions['delete_post'] }}</option>{% endif %}
+            {% if not r.reported_user.is_admin %}<option value="ban">{{ decisions['ban'] }}</option>{% endif %}
+          </select>
+          <label for="note-{{ r.id }}">MENSAJE PARA QUIEN REPORTÓ (opcional, se incluye en su notificación)</label>
+          <textarea id="note-{{ r.id }}" name="note" rows="2" maxlength="1000" placeholder="Ej: Eliminamos la publicación porque incumplía las normas…"></textarea>
+          <div class="row"><button class="btn sm pink">✔ RESOLVER Y NOTIFICAR</button></div>
+        </form>
+      {% else %}
+        <p><b>Decisión:</b> {{ r.decision_label }}
+          <small class="muted">· {{ r.resolved_at|timeago }}{% if r.resolved_by %} por @{{ r.resolved_by.username }}{% endif %}</small></p>
+        {% if r.admin_note %}<p><b>Nota:</b> {{ r.admin_note }}</p>{% endif %}
+      {% endif %}
+    </div>
+  </article>
+{% else %}
+  <div class="win"><div class="empty">{{ 'NO HAY REPORTES POR REVISAR ✔' if status == 'pending' else 'AÚN NO HAS RESUELTO REPORTES' }}</div></div>
+{% endfor %}
+
+{{ pager(pagination, 'admin.reports', {'status': status}) }}
+{% endblock %}

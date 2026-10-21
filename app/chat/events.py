@@ -16,7 +16,7 @@ from flask_socketio import emit, join_room, leave_room
 from sqlalchemy.exc import SQLAlchemyError
 
 from ..extensions import db, socketio
-from ..models import Group, Message, ReadMarker, User, dm_room
+from ..models import Group, Message, Notification, ReadMarker, User, dm_room
 
 MAX_LEN = 2000
 
@@ -57,7 +57,8 @@ def _resolve_room(kind, target_id):
             return dm_room(current_user.id, other.id), other
     elif kind == "group":
         grp = db.session.get(Group, target_id)
-        if grp and grp.has_member(current_user):
+        # El admin puede entrar a cualquier grupo para moderarlo.
+        if grp and (grp.has_member(current_user) or current_user.is_admin):
             return f"group_{grp.id}", grp
     return None, None
 
@@ -88,6 +89,8 @@ def handle_join(data):
         if room:
             # Marca como leído antes de unirse para no añadir el mensaje actual
             # al contador de no leídos.
+            if data.get("type") == "dm":
+                Notification.mark_dm_read(current_user.id, target.id)
             ReadMarker.mark_read(current_user.id, _conv_key(data.get("type"), target))
             join_room(room)
             emit("joined", {"room": room})
@@ -105,6 +108,47 @@ def handle_leave(data):
             leave_room(room)
     except SQLAlchemyError:
         _report_socket_db_error("Error de base de datos al salir de una sala de chat")
+
+
+@socketio.on("mark_read")
+def handle_mark_read(data):
+    """El cliente lo envía cuando llega un mensaje y la conversación está abierta en pantalla:
+    así no queda como 'no leído' en la campana ni en la barra lateral."""
+    if not current_user.is_authenticated or not isinstance(data, dict):
+        return
+    try:
+        room, target = _resolve_room(data.get("type"), data.get("id"))
+        if room:
+            if data.get("type") == "dm":
+                Notification.mark_dm_read(current_user.id, target.id)
+            ReadMarker.mark_read(current_user.id, _conv_key(data.get("type"), target))
+    except SQLAlchemyError:
+        _report_socket_db_error("Error de base de datos al marcar una conversación como leída")
+
+
+@socketio.on("delete_message")
+def handle_delete_message(data):
+    """Solo el administrador puede borrar mensajes (suyos o de cualquier usuario)."""
+    if not current_user.is_authenticated or not isinstance(data, dict):
+        return
+    if not current_user.is_admin:
+        emit("error_message", {"error": "Solo el administrador puede eliminar mensajes."})
+        return
+    try:
+        message_id = int(data.get("id"))
+    except (TypeError, ValueError):
+        return
+    try:
+        msg = db.session.get(Message, message_id)
+        if not msg:
+            return
+        room = f"group_{msg.group_id}" if msg.group_id else dm_room(msg.sender_id, msg.recipient_id)
+        db.session.delete(msg)
+        db.session.commit()
+    except SQLAlchemyError:
+        _report_socket_db_error("Error de base de datos al eliminar un mensaje de chat")
+        return
+    emit("message_deleted", {"id": message_id, "room": room}, to=room)
 
 
 @socketio.on("typing")
@@ -157,6 +201,11 @@ def handle_send_message(data):
         db.session.add(msg)
         db.session.flush()
         payload = msg.to_dict()
+        if kind == "dm":
+            # Aviso en la campana: así sabes quién te escribió aunque no estés en el chat.
+            Notification.notify_message(
+                target.id, sender.id,
+                ("[código] " + body[:60]) if is_code else body[:80])
         group_member_ids = (
             [member.user_id for member in target.members]
             if kind == "group" else []

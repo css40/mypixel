@@ -368,11 +368,28 @@ h1.ptitle { font-size: 1.05rem !important; }
 .tabs a { flex: 1; text-align: center; font-family: var(--px); font-size: .62rem; padding: .8rem; text-decoration: none; border: 2px solid var(--line); border-bottom: 0; background: var(--paper); }
 .tabs a.on { background: var(--pink); color: var(--cream); }
 .auth .win { margin-bottom: 1rem; }
-.social-login { display: grid; gap: .65rem; padding-top: 0; }
-.social-btn { display: flex; justify-content: center; align-items: center; gap: .65rem; text-decoration: none; }
-.social-btn span { font-family: system-ui, sans-serif; font-size: 1.2rem; font-weight: 700; }
-.social-btn.google { background: var(--field); color: var(--ink); }
-.social-btn.github { background: #24292f; color: #fff; }
+.social-login { display: grid; gap: .75rem; padding-top: 0; }
+.social-sep { display: flex; align-items: center; gap: .7rem; font-family: var(--px); font-size: .45rem; opacity: .75; }
+.social-sep::before, .social-sep::after { content: ""; flex: 1; border-top: 2px dashed var(--line); }
+.social-btn {
+  display: flex; justify-content: flex-start; align-items: center; gap: .9rem;
+  text-decoration: none; padding: .7rem .9rem; border: 2px solid var(--line);
+  box-shadow: 4px 4px 0 var(--shadow); font-family: var(--body); font-size: 1.35rem; letter-spacing: .02em;
+  transition: transform .08s, box-shadow .08s;
+}
+.social-btn:hover { transform: translate(-1px, -1px); box-shadow: 6px 6px 0 var(--shadow); }
+.social-btn:active { transform: translate(3px, 3px); box-shadow: 0 0 0 var(--shadow); }
+.social-ico { flex: none; display: block; padding: 3px; width: 34px; height: 34px; border: 2px solid var(--line); }
+.social-txt { flex: 1; text-align: center; padding-right: 34px; }   /* compensa el icono para centrar el texto */
+.social-txt b { font-family: var(--px); font-size: .6rem; font-weight: normal; margin-left: .2rem; }
+.social-btn.google { background: #ffffff; color: #3c4043; }
+.social-btn.google .social-ico { background: #fff; }
+.social-btn.google:hover { background: #fff8e6; }
+.social-btn.github { background: #24292f; color: #f6f8fa; border-color: #6f6980; }
+.social-btn.github .social-ico { background: #f6f8fa; color: #24292f; }
+.social-btn.github:hover { background: #32383f; }
+:root[data-theme="dark"] .social-btn.google { background: #f1e9d2; color: #1d1b25; }
+:root[data-theme="dark"] .social-btn.github { border-color: var(--line); }
 .marq { overflow: hidden; white-space: nowrap; border: 2px solid var(--line); background: var(--top); color: var(--green); font-family: var(--px); font-size: .55rem; padding: .5rem; }
 .marq span { display: inline-block; padding-left: 100%; animation: mq 16s linear infinite; }
 @keyframes mq { to { transform: translateX(-100%); } }
@@ -640,3 +657,27 @@ h1.ptitle { font-size: 1.05rem !important; }
   .acct-dd { display: block; position: static; margin-top: .4rem; box-shadow: none; }
   .logo { font-size: .8rem; }
 }
+
+/* ---------- chat: moderación del admin ---------- */
+.msg .meta .msg-del {
+  margin-left: .5rem; background: transparent; color: var(--pink); border: 1px solid var(--pink);
+  font-family: var(--px); font-size: .45rem; line-height: 1; padding: .15rem .3rem; cursor: pointer; opacity: .55;
+}
+.msg:hover .meta .msg-del, .msg .meta .msg-del:focus-visible { opacity: 1; }
+.msg .meta .msg-del:hover { background: var(--pink); color: var(--cream); }
+.msg.is-removing { opacity: .35; transition: opacity .2s; }
+
+/* ---------- notificaciones detalladas (mensajes, reportes, advertencias) ---------- */
+.notif-detail { margin: .3rem 0; line-height: 1.3; white-space: pre-line; }
+
+/* ---------- publicidad (publicación especial del admin) ---------- */
+.ad-post { border-width: 3px; box-shadow: 6px 6px 0 var(--yellow), 6px 6px 0 2px var(--line); }
+.ad-title { margin-bottom: .8rem; }
+.ad-img { display: block; width: 100%; height: auto; max-height: 40rem; object-fit: contain; background: var(--paper); border: 2px solid var(--line); margin: 0 0 .9rem; }
+.ad-desc { margin-bottom: .6rem; word-break: break-word; }
+
+/* ---------- reportes (panel admin) ---------- */
+.report-card .report-meta { display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; }
+.report-details { margin: .8rem 0; padding: .6rem .8rem; background: var(--paper); border-left: 6px solid var(--pink); white-space: pre-line; word-break: break-word; }
+.report-resolve { display: grid; gap: .5rem; margin-top: 1rem; padding-top: .9rem; border-top: 3px dashed var(--line); }
+.report-resolve label { font-family: var(--px); font-size: .5rem; }

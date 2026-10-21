@@ -10,6 +10,20 @@
         <div class="notif {{ 'unread' if not n.read_at }}">
           <a class="av-link" href="{{ url_for('profile.view', username=n.actor.username) }}">{{ avatar(n.actor, 36) }}</a>
           <div style="min-width:0;flex:1">
+            {% if n.kind == 'report_result' %}
+              <p><span class="pill gold">★ SOBRE TU REPORTE</span></p>
+              <p class="notif-detail">{{ n.message }}</p>
+            {% elif n.kind == 'warning' %}
+              <p><span class="pill" style="background:var(--pink);color:var(--cream)">⚠ ADVERTENCIA</span></p>
+              <p class="notif-detail">{{ n.message }}</p>
+            {% elif n.kind == 'message' %}
+              <p>
+                <a class="who" style="font-family:var(--px);font-size:.6rem;text-decoration:none" href="{{ url_for('profile.view', username=n.actor.username) }}">@{{ n.actor.username }}</a>
+                te envió un mensaje
+              </p>
+              {% if n.message %}<p class="notif-detail">“{{ n.message }}”</p>{% endif %}
+              <p><a class="btn sm cyan" href="{{ url_for('chat.direct', username=n.actor.username) }}">💬 ABRIR CHAT</a></p>
+            {% else %}
             <p>
               <a class="who" style="font-family:var(--px);font-size:.6rem;text-decoration:none" href="{{ url_for('profile.view', username=n.actor.username) }}">@{{ n.actor.username }}</a>
               {% if n.kind == 'comment' %}comentó en tu publicación
@@ -19,11 +33,12 @@
               {% endif %}
               {% if n.post %}<a class="t" href="{{ url_for('posts.detail', post_id=n.post.id) }}">{{ n.post.title }}</a>{% endif %}
             </p>
+            {% endif %}
             <small class="muted">{{ n.created_at|timeago }}</small>
           </div>
         </div>
       {% else %}
-        <div class="empty"><img class="mascot sm" src="{{ url_for('static', filename='img/noti.png') }}" alt="" width="130" height="119" loading="lazy"><br>SIN NOTIFICACIONES Dev<br><small style="font-family:var(--body);font-size:1.2rem">Cuando alguien comente, valore o te siga, aparecerá aquí.</small></div>
+        <div class="empty"><img class="mascot sm" src="{{ url_for('static', filename='img/noti.png') }}" alt="" width="130" height="119" loading="lazy"><br>SIN NOTIFICACIONES Dev<br><small style="font-family:var(--body);font-size:1.2rem">Cuando alguien te escriba, comente, valore o te siga, aparecerá aquí.</small></div>
       {% endfor %}
     </div>
   </div>

@@ -4,7 +4,7 @@ from sqlalchemy import func, or_
 from sqlalchemy.exc import SQLAlchemyError
 
 from ..extensions import db
-from ..models import Group, GroupMember, Message, ReadMarker, User, dm_room
+from ..models import Group, GroupMember, Message, Notification, ReadMarker, User, dm_room
 from ..utils import escape_like
 from . import bp
 from .forms import GroupForm
@@ -126,6 +126,8 @@ def direct(username):
                 .order_by(Message.created_at.desc()).limit(HISTORY_LIMIT).all())
     messages.reverse()
 
+    # Al abrir el chat, los avisos de "te escribió X" de la campana pasan a leídos.
+    Notification.mark_dm_read(current_user.id, other.id)
     if not _mark_read(current_user.id, f"dm_{other.id}"):
         return redirect(url_for("chat.index"))
     partners, my_groups = _sidebar_data(extra_partner=other)
@@ -139,7 +141,8 @@ def direct(username):
 @login_required
 def group(group_id):
     grp = db.get_or_404(Group, group_id)
-    if not grp.has_member(current_user):
+    # El admin puede entrar a cualquier grupo para moderarlo sin tener que unirse.
+    if not grp.has_member(current_user) and not current_user.is_admin:
         flash("Únete al grupo para ver la conversación.", "info")
         return redirect(url_for("chat.index"))
 
@@ -206,7 +209,8 @@ def leave_group(group_id):
 @login_required
 def delete_group(group_id):
     grp = db.get_or_404(Group, group_id)
-    if grp.owner_id != current_user.id:
+    # Lo borra su creador o cualquier administrador de la web.
+    if grp.owner_id != current_user.id and not current_user.is_admin:
         abort(403)
     db.session.delete(grp)
     if not _commit_chat_changes():

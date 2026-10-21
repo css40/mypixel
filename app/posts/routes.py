@@ -5,11 +5,12 @@ from sqlalchemy import func, or_
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import joinedload
 
+from ..admin.routes import purge_post
 from ..extensions import db
 from ..models import CodeBlock, Comment, Like, Notification, Post, Rating, Tag
 from ..utils import delete_upload, escape_like, parse_tags, save_attachment
 from . import bp
-from .forms import CommentForm, PostForm
+from .forms import AdForm, CommentForm, PostForm
 
 
 def _apply_code_blocks(post: Post, form: PostForm) -> None:
@@ -116,6 +117,76 @@ def create():
     return render_template("posts/form.html", form=form, editing=False)
 
 
+# --------------------------------------------------------------------------- #
+# Publicaciones especiales (publicidad): solo el administrador
+# --------------------------------------------------------------------------- #
+AD_CATEGORY = "Anuncio"
+
+
+def _require_admin():
+    if not current_user.is_admin:
+        abort(403)
+
+
+def _ad_image(form, required):
+    """Valida y sube la imagen del anuncio. Devuelve (url, nombre) o (None, None) si no hay."""
+    file = form.image.data
+    if not getattr(file, "filename", ""):
+        if required:
+            raise ValueError("El anuncio necesita una imagen.")
+        return None, None
+    ext = file.filename.rsplit(".", 1)[-1].lower() if "." in file.filename else ""
+    if ext not in current_app.config["ALLOWED_IMAGE_EXTENSIONS"]:
+        raise ValueError("La imagen debe ser PNG, JPG, GIF o WEBP.")
+    return save_attachment(file)
+
+
+@bp.route("/posts/ad/new", methods=["GET", "POST"])
+@login_required
+def create_ad():
+    _require_admin()
+    form = AdForm()
+    if form.validate_on_submit():
+        try:
+            stored, original = _ad_image(form, required=True)
+        except ValueError as exc:
+            flash(str(exc), "error")
+            return render_template("posts/ad_form.html", form=form, editing=False)
+        post = Post(title=form.title.data.strip(), language=AD_CATEGORY, is_ad=True,
+                    body=form.body.data.strip(), attachment=stored,
+                    attachment_name=original, author=current_user)
+        db.session.add(post)
+        db.session.commit()
+        flash("Anuncio publicado.", "success")
+        return redirect(url_for("posts.feed"))
+    return render_template("posts/ad_form.html", form=form, editing=False)
+
+
+@bp.route("/posts/ad/<int:post_id>/edit", methods=["GET", "POST"])
+@login_required
+def edit_ad(post_id):
+    _require_admin()
+    post = db.get_or_404(Post, post_id)
+    if not post.is_ad:
+        return redirect(url_for("posts.edit", post_id=post.id))
+    form = AdForm(obj=post)
+    if form.validate_on_submit():
+        try:
+            stored, original = _ad_image(form, required=False)
+        except ValueError as exc:
+            flash(str(exc), "error")
+            return render_template("posts/ad_form.html", form=form, editing=True, post=post)
+        if stored:
+            delete_upload("attachments", post.attachment)
+            post.attachment, post.attachment_name = stored, original
+        post.title = form.title.data.strip()
+        post.body = form.body.data.strip()
+        db.session.commit()
+        flash("Anuncio actualizado.", "success")
+        return redirect(url_for("posts.feed"))
+    return render_template("posts/ad_form.html", form=form, editing=True, post=post)
+
+
 @bp.route("/posts/<int:post_id>")
 def detail(post_id):
     post = db.get_or_404(Post, post_id)
@@ -129,6 +200,8 @@ def detail(post_id):
 @login_required
 def edit(post_id):
     post = db.get_or_404(Post, post_id)
+    if post.is_ad:
+        return redirect(url_for("posts.edit_ad", post_id=post.id))
     if post.user_id != current_user.id:
         abort(403)
     form = PostForm(obj=post)
@@ -167,8 +240,7 @@ def delete(post_id):
     post = db.get_or_404(Post, post_id)
     if post.user_id != current_user.id and not current_user.is_admin:
         abort(403)
-    delete_upload("attachments", post.attachment)
-    db.session.delete(post)
+    purge_post(post)
     db.session.commit()
     flash("Publicación eliminada.", "info")
     return redirect(url_for("posts.feed"))
@@ -237,6 +309,8 @@ def rate(post_id):
     post = db.get_or_404(Post, post_id)
     if post.user_id == current_user.id:
         return jsonify(error="No puedes valorar tu propio código."), 403
+    if post.is_ad:
+        return jsonify(error="Los anuncios no se pueden valorar."), 400
 
     score = request.form.get("score", type=int)
     if score not in (1, 2, 3, 4, 5):

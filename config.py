@@ -31,13 +31,20 @@ def _database_url() -> str:
 class Config:
     SECRET_KEY = os.environ.get("SECRET_KEY", "dev-only-change-me")
     IMGBB_API_KEY = os.environ.get("IMGBB_API_KEY", "")
-    GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID", "")
-    GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET", "")
-    GITHUB_CLIENT_ID = os.environ.get("GITHUB_CLIENT_ID", "")
-    GITHUB_CLIENT_SECRET = os.environ.get("GITHUB_CLIENT_SECRET", "")
+    GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID", "").strip()
+    GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET", "").strip()
+    GITHUB_CLIENT_ID = os.environ.get("GITHUB_CLIENT_ID", "").strip()
+    GITHUB_CLIENT_SECRET = os.environ.get("GITHUB_CLIENT_SECRET", "").strip()
     OAUTH_REDIRECT_BASE_URL = os.environ.get(
         "OAUTH_REDIRECT_BASE_URL", "https://mypixel-3po7.onrender.com"
     ).strip().rstrip("/")
+
+    # Correo (recuperar contraseña). Se envía por la API HTTP de Brevo (gratis, funciona en Render,
+    # donde los puertos SMTP están bloqueados). Sin BREVO_API_KEY el enlace solo se escribe en el log.
+    BREVO_API_KEY = os.environ.get("BREVO_API_KEY", "")
+    MAIL_SENDER = os.environ.get("MAIL_SENDER", "")          # correo verificado en Brevo
+    MAIL_SENDER_NAME = os.environ.get("MAIL_SENDER_NAME", "MyPixel")
+    PASSWORD_RESET_MAX_AGE = 3600                             # el enlace caduca en 1 hora
 
     # Base de datos (PostgreSQL en producción, SQLite en desarrollo local)
     SQLALCHEMY_DATABASE_URI = _database_url()

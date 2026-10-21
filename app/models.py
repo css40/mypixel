@@ -8,7 +8,8 @@ User 1—N Rating N—1 Post        (única por usuario+post, 1-5 estrellas)
 Post 1—N CodeBlock              (varios snippets por publicación, ordenados)
 Post N—N Tag                    (tabla puente post_tags)
 User N—N User (Follow)          (seguidor / seguido)
-User 1—N Notification           (avisos: comentario, like, valoración, seguidor)
+User 1—N Notification           (avisos: comentario, like, valoración, seguidor, mensaje, reportes)
+Report                          (denuncia de una publicación o de un perfil, la resuelve el admin)
 User 1—N ReadMarker             (última lectura por conversación de chat, persistente)
 User 1—N Message (sender) / User 1—N Message (recipient)  -> chat privado
 Group 1—N GroupMember N—1 User  -> membresías de grupos
@@ -193,6 +194,9 @@ class Post(db.Model):
     body = db.Column(db.Text, nullable=False)                        # Markdown
     attachment = db.Column(db.Text)                 # URL de ImgBB o nombre local antiguo
     attachment_name = db.Column(db.String(255))     # nombre original
+    # Publicación especial (publicidad) creada solo por el admin: imagen + título + descripción,
+    # se muestra completa en el inicio. La imagen se guarda en `attachment` y el texto en `body`.
+    is_ad = db.Column(db.Boolean, default=False, nullable=False)
     created_at = db.Column(db.DateTime, default=utcnow, nullable=False, index=True)
     updated_at = db.Column(db.DateTime, default=utcnow, onupdate=utcnow, nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False, index=True)
@@ -328,14 +332,19 @@ class Rating(db.Model):
 # Notificaciones
 # --------------------------------------------------------------------------- #
 class Notification(db.Model):
-    """Aviso persistente: comentario, like, valoración o nuevo seguidor."""
+    """Aviso persistente.
+
+    kind: comment | like | rating | follow | message | report_result | warning
+    `message` guarda un texto libre (vista previa del mensaje, o el detalle de la decisión
+    del admin en un reporte)."""
     __tablename__ = "notifications"
 
     id = db.Column(db.Integer, primary_key=True)
-    kind = db.Column(db.String(20), nullable=False)   # comment | like | rating | follow
+    kind = db.Column(db.String(20), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False, index=True)  # receptor
     actor_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)              # quien la causó
     post_id = db.Column(db.Integer, db.ForeignKey("posts.id"))
+    message = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=utcnow, nullable=False, index=True)
     read_at = db.Column(db.DateTime)
 
@@ -344,13 +353,86 @@ class Notification(db.Model):
     post = db.relationship("Post")
 
     @staticmethod
-    def notify(user_id, actor_id, kind, post_id=None):
+    def notify(user_id, actor_id, kind, post_id=None, message=None):
         """Crea la notificación salvo que sea sobre uno mismo (no te avisas a ti mismo)."""
         if user_id == actor_id:
             return None
-        n = Notification(user_id=user_id, actor_id=actor_id, kind=kind, post_id=post_id)
+        n = Notification(user_id=user_id, actor_id=actor_id, kind=kind,
+                         post_id=post_id, message=message)
         db.session.add(n)
         return n
+
+    @staticmethod
+    def notify_message(user_id, actor_id, preview):
+        """Aviso de mensaje directo nuevo. Mientras no lo leas, los mensajes siguientes de la
+        misma persona se agrupan en un único aviso (se actualiza la vista previa y la hora)."""
+        existing = Notification.query.filter_by(user_id=user_id, actor_id=actor_id,
+                                                kind="message", read_at=None).first()
+        if existing:
+            existing.message = preview
+            existing.created_at = utcnow()
+            return existing
+        return Notification.notify(user_id, actor_id, "message", message=preview)
+
+    @staticmethod
+    def mark_dm_read(user_id, actor_id):
+        """Marca como leídos los avisos de mensajes que `actor_id` envió a `user_id`."""
+        Notification.query.filter_by(user_id=user_id, actor_id=actor_id,
+                                     kind="message", read_at=None).update(
+            {"read_at": utcnow()}, synchronize_session=False)
+
+
+# --------------------------------------------------------------------------- #
+# Reportes (denuncias de publicaciones o perfiles)
+# --------------------------------------------------------------------------- #
+class Report(db.Model):
+    """Un usuario denuncia una publicación o un perfil; el admin la revisa y decide."""
+    __tablename__ = "reports"
+
+    REASONS = [
+        ("spam", "Spam o publicidad no deseada"),
+        ("abuso", "Acoso o lenguaje ofensivo"),
+        ("inapropiado", "Contenido inapropiado"),
+        ("suplantacion", "Suplantación de identidad"),
+        ("malicioso", "Código malicioso o estafa"),
+        ("otro", "Otro motivo"),
+    ]
+    # decisión del admin -> texto que se muestra
+    DECISIONS = {
+        "dismiss": "Sin acción: no se encontró ninguna infracción",
+        "warn": "Advertencia al usuario",
+        "delete_post": "Publicación eliminada",
+        "ban": "Usuario suspendido",
+    }
+
+    id = db.Column(db.Integer, primary_key=True)
+    kind = db.Column(db.String(10), nullable=False)             # post | profile
+    reason = db.Column(db.String(20), nullable=False)
+    details = db.Column(db.Text, default="", nullable=False)
+    status = db.Column(db.String(10), default="pending", nullable=False, index=True)  # pending | resolved
+    decision = db.Column(db.String(20))
+    admin_note = db.Column(db.Text)
+    target_label = db.Column(db.String(150), nullable=False, default="")  # título o @usuario (se conserva si se borra)
+    created_at = db.Column(db.DateTime, default=utcnow, nullable=False, index=True)
+    resolved_at = db.Column(db.DateTime)
+
+    reporter_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False, index=True)
+    reported_user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False, index=True)
+    post_id = db.Column(db.Integer, db.ForeignKey("posts.id"))
+    resolved_by_id = db.Column(db.Integer, db.ForeignKey("users.id"))
+
+    reporter = db.relationship("User", foreign_keys=[reporter_id])
+    reported_user = db.relationship("User", foreign_keys=[reported_user_id])
+    resolved_by = db.relationship("User", foreign_keys=[resolved_by_id])
+    post = db.relationship("Post")
+
+    @property
+    def reason_label(self) -> str:
+        return dict(self.REASONS).get(self.reason, self.reason)
+
+    @property
+    def decision_label(self) -> str:
+        return self.DECISIONS.get(self.decision, "")
 
 
 # --------------------------------------------------------------------------- #

@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field, winbar %}
+{% block title %}Nueva contraseña{% endblock %}
+{% block content %}
+<div class="auth">
+  <div class="win">
+    {{ winbar('NUEVA_CLAVE.EXE', 'c-cyan') }}
+    <form class="body" method="post" novalidate>
+      {{ form.hidden_tag() }}
+      {{ field(form.password, help="Mínimo 8 caracteres.") }}
+      {{ field(form.confirm) }}
+      <div class="row"><button class="btn pink block">GUARDAR CONTRASEÑA ▶</button></div>
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -49,6 +49,15 @@
     return av;
   }
 
+  // Botón ✕ para que el admin elimine un mensaje (suyo o de cualquier usuario)
+  function deleteButton(id) {
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "msg-del"; b.dataset.del = id;
+    b.title = "Eliminar mensaje"; b.setAttribute("aria-label", "Eliminar mensaje");
+    b.textContent = "✕";
+    return b;
+  }
+
   function renderMessage(m) {
     const mine = m.sender_id === cfg.me;
     const li = document.createElement("li");
@@ -63,6 +72,7 @@
     const time = document.createElement("time");
     time.textContent = localTime(m.created_at);
     meta.appendChild(time);
+    if (cfg.isAdmin) meta.appendChild(deleteButton(m.id));
     col.appendChild(meta);
 
     if (m.is_code) {
@@ -109,10 +119,26 @@
     const nearBottom = list.scrollHeight - list.scrollTop - list.clientHeight < 120;
     list.appendChild(renderMessage(m));
     if (typingEl) typingEl.classList.add("hidden");
+    // La conversación está abierta: se da por leído (campana y barra lateral)
+    if (m.sender_id !== cfg.me) socket.emit("mark_read", { type: cfg.kind, id: cfg.targetId });
     if (nearBottom || m.sender_id === cfg.me) scrollBottom();
   });
 
   socket.on("error_message", (e) => setStatus(e.error, false));
+
+  // ---- Moderación: el admin elimina mensajes ----
+  socket.on("message_deleted", (d) => {
+    const li = list && list.querySelector(`[data-id="${d.id}"]`);
+    if (li) li.remove();
+  });
+  if (list && cfg.isAdmin) {
+    list.addEventListener("click", (e) => {
+      const btn = e.target.closest(".msg-del");
+      if (!btn || !window.confirm("¿Eliminar este mensaje para todos?")) return;
+      btn.closest(".msg").classList.add("is-removing");
+      socket.emit("delete_message", { id: Number(btn.dataset.del) });
+    });
+  }
 
   // ---- Indicador "X está escribiendo…" ----
   let typingResetTimer = null;
@@ -125,8 +151,18 @@
   });
 
   // ---- Notificaciones de otras conversaciones (punto ámbar en la barra lateral) ----
+  function bumpBell() {
+    const bell = document.querySelector('.nb-icon[aria-label="Notificaciones"]');
+    if (!bell) return;
+    let c = bell.querySelector(".count");
+    if (!c) { c = document.createElement("span"); c.className = "count"; c.textContent = "0"; bell.appendChild(c); }
+    const n = parseInt(c.textContent, 10);
+    c.textContent = n >= 99 ? "99+" : String((isNaN(n) ? 0 : n) + 1);
+  }
+
   socket.on("notification", (n) => {
     if (n.key === cfg.activeKey) return;
+    if (n.key.startsWith("dm_")) bumpBell();
     const link = document.querySelector(`.conv-link[data-conv="${n.key}"]`);
     if (link) {
       link.classList.add("has-unread");

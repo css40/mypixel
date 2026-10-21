@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field, winbar %}
+{% block title %}Recuperar contraseña{% endblock %}
+{% block content %}
+<div class="auth">
+  <div class="win">
+    {{ winbar('RECUPERAR.EXE', 'c-yellow') }}
+    <form class="body" method="post" novalidate>
+      {{ form.hidden_tag() }}
+      <p class="help">Escribe el correo de tu cuenta y te enviaremos un enlace para elegir una contraseña nueva. Sirve también si entraste con Google o GitHub y quieres crear una contraseña.</p>
+      {{ field(form.email) }}
+      <div class="row"><button class="btn pink block">ENVIAR ENLACE ▶</button></div>
+      <p class="help" style="margin-top:1rem"><a href="{{ url_for('auth.login') }}" style="color:var(--pink)">← Volver a iniciar sesión</a></p>
+    </form>
+  </div>
+</div>
+{% endblock %}

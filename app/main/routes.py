@@ -2,12 +2,15 @@
 from datetime import datetime
 from pathlib import Path
 
-from flask import abort, current_app, render_template, request, send_from_directory
+from flask import (abort, current_app, flash, redirect, render_template, request,
+                   send_from_directory, url_for)
 from flask_login import current_user, login_required
+from sqlalchemy import func
 from sqlalchemy.orm import joinedload
 
 from ..extensions import db
-from ..models import Notification
+from ..models import Notification, Post, Report, User
+from ..posts.forms import ReportForm
 from ..utils import render_markdown, strip_markdown
 from . import bp
 
@@ -48,6 +51,51 @@ def notifications():
 
     return render_template("notifications.html", pagination=pagination,
                            notifications=pagination.items)
+
+
+# --------------------------------------------------------------------------- #
+# Reportar publicaciones o perfiles (los revisa el administrador)
+# --------------------------------------------------------------------------- #
+def _submit_report(kind, post, offender):
+    """Muestra el formulario de reporte y lo guarda. `post` es None si se reporta un perfil."""
+    if offender.id == current_user.id:
+        flash("No puedes reportarte a ti mismo.", "error")
+        return redirect(url_for("posts.feed"))
+
+    q = Report.query.filter_by(reporter_id=current_user.id, status="pending", kind=kind)
+    q = q.filter_by(post_id=post.id) if post else q.filter_by(reported_user_id=offender.id)
+    back = (url_for("posts.detail", post_id=post.id) if post
+            else url_for("profile.view", username=offender.username))
+    if q.first():
+        flash("Ya enviaste un reporte sobre esto; el administrador lo está revisando.", "info")
+        return redirect(back)
+
+    form = ReportForm()
+    if form.validate_on_submit():
+        db.session.add(Report(
+            kind=kind, reason=form.reason.data, details=form.details.data.strip(),
+            reporter_id=current_user.id, reported_user_id=offender.id,
+            post_id=post.id if post else None,
+            target_label=(post.title if post else f"@{offender.username}")[:150]))
+        db.session.commit()
+        flash("Reporte enviado. Gracias: el administrador lo revisará y te avisaremos de la decisión.", "success")
+        return redirect(back)
+    return render_template("report.html", form=form, kind=kind, post=post,
+                           offender=offender, back=back)
+
+
+@bp.route("/report/post/<int:post_id>", methods=["GET", "POST"])
+@login_required
+def report_post(post_id):
+    post = db.get_or_404(Post, post_id)
+    return _submit_report("post", post, post.author)
+
+
+@bp.route("/report/user/<username>", methods=["GET", "POST"])
+@login_required
+def report_user(username):
+    user = User.query.filter(func.lower(User.username) == username.lower()).first_or_404()
+    return _submit_report("profile", None, user)
 
 
 @bp.route("/uploads/<path:filename>")
